@@ -1,0 +1,360 @@
+/* --- Reset e Variáveis Globais --- */
+:root {
+    --bg-color: #020a1a;
+    --primary-color: #00ffff;
+    --text-color: #e0e0e0;
+    --heading-color: #ffffff;
+    --card-bg: rgba(10, 25, 47, 0.7);
+    --card-border: rgba(0, 255, 255, 0.2);
+    --font-heading: 'Poppins', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- Fundo Cósmico Animado --- */
+.stars-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: url(https://www.transparenttextures.com/patterns/stardust.png);
+    background-attachment: fixed;
+    animation: twinkle 200s linear infinite;
+    z-index: -1;
+}
+
+@keyframes twinkle {
+    from { background-position: 0 0; }
+    to { background-position: -10000px 5000px; }
+}
+
+
+/* --- Cabeçalho e Navegação --- */
+.site-header {
+    background: rgba(2, 10, 26, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--card-border);
+    padding: 15px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+}
+
+.site-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 4vw, 1.8rem);
+    color: var(--heading-color);
+    text-decoration: none;
+    font-weight: 700;
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.main-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+}
+
+.main-nav a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+.main-nav a:hover {
+    color: var(--primary-color);
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+}
+
+.cart-icon {
+    position: relative;
+    color: var(--text-color);
+    margin-right: 20px;
+}
+
+.cart-icon:hover {
+    color: var(--primary-color);
+}
+
+.cart-count {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background: var(--primary-color);
+    color: var(--bg-color);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+/* --- Seção Hero --- */
+.hero {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    padding-top: 100px;
+}
+
+.hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    color: var(--heading-color);
+    line-height: 1.1;
+    text-shadow: 0 0 15px var(--primary-color);
+}
+
+.hero p {
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    max-width: 600px;
+    margin: 20px auto 40px;
+    color: var(--text-color);
+}
+
+.cta-button {
+    background: var(--primary-color);
+    color: var(--bg-color);
+    padding: 15px 30px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-family: var(--font-heading);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: inline-block;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 20px var(--primary-color);
+}
+
+/* --- Vitrine de Jogos --- */
+.game-showcase {
+    padding: 80px 0;
+}
+
+.game-showcase h2 {
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 6vw, 2.8rem);
+    margin-bottom: 50px;
+    color: var(--heading-color);
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.game-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.1s, box-shadow 0.3s;
+    backdrop-filter: blur(5px);
+    position: relative;
+    padding-bottom: 60px; /* Espaço para o botão */
+}
+
+.game-card:hover {
+    box-shadow: 0 0 25px var(--card-border);
+}
+
+.game-card img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    display: block;
+}
+
+.game-card h3 {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    color: var(--heading-color);
+    margin: 15px;
+}
+
+.game-card .price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0 15px;
+}
+
+/* --- Efeito de Hover e Botão do Card --- */
+.add-to-cart-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--primary-color);
+    color: var(--bg-color);
+    border: none;
+    padding: 15px;
+    font-family: var(--font-heading);
+    font-weight: bold;
+    cursor: pointer;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.game-card:hover .add-to-cart-btn {
+    transform: translateY(0);
+}
+
+/* --- Rodapé --- */
+.site-footer-bottom {
+    padding: 30px 0;
+    border-top: 1px solid var(--card-border);
+    background: rgba(2, 10, 26, 0.8);
+}
+
+.site-footer-bottom .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.social-links {
+    display: flex;
+    gap: 20px;
+}
+
+.social-links a {
+    color: var(--text-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.social-links a:hover {
+    color: var(--primary-color);
+}
+
+/* --- Animações de Entrada --- */
+.animate-on-load, .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.animate-on-load {
+    transition-delay: calc(var(--i, 0) * 150ms);
+}
+
+.animate-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Responsividade (Mobile-First) --- */
+@media (max-width: 768px) {
+    .main-nav {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 70%;
+        height: 100vh;
+        background: var(--bg-color);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transform: translateX(100%);
+        transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        display: flex;
+    }
+
+    .main-nav.is-active {
+        transform: translateX(0);
+    }
+
+    .main-nav ul {
+        flex-direction: column;
+        gap: 40px;
+        text-align: center;
+    }
+    
+    .main-nav a {
+        font-size: 1.5rem;
+    }
+
+    .mobile-menu-toggle {
+        display: block;
+        width: 30px;
+        height: 22px;
+        position: relative;
+    }
+    .mobile-menu-toggle span {
+        display: block;
+        width: 100%;
+        height: 3px;
+        background: var(--heading-color);
+        border-radius: 3px;
+        position: absolute;
+        transition: transform 0.3s, opacity 0.3s;
+    }
+    .mobile-menu-toggle span:nth-child(1) { top: 0; }
+    .mobile-menu-toggle span:nth-child(2) { top: 9px; }
+    .mobile-menu-toggle span:nth-child(3) { bottom: 0; }
+    
+    .mobile-menu-toggle.is-active span:nth-child(1) {
+        transform: rotate(45deg) translate(6px, 6px);
+    }
+    .mobile-menu-toggle.is-active span:nth-child(2) {
+        opacity: 0;
+    }
+    .mobile-menu-toggle.is-active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -7px);
+    }
+}
+
+09
