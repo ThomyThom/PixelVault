@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "version": 2,
   "builds": [
@@ -29,36 +28,4 @@
       "destination": "/backend/server.js"
     }
   ]
-=======
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "style.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "script.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "src/img/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/backend/server.js"
-    }
-  ]
->>>>>>> 218198a8ee05a2dab76e7511d5a24ee5aeb9f6f0
 }
