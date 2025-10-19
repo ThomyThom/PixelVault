@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA DE AUTENTICAÇÃO E UI (AGORA REAL) ---
+    // --- LÓGICA DE AUTENTICAÇÃO E UI (REAL) ---
     const loginLink = document.getElementById('login-link');
     const userNavItems = document.querySelectorAll('.user-nav');
     const userNameLink = document.getElementById('user-name-link');
@@ -33,11 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DA PÁGINA DE LOGIN (CONECTADA AO BACK-END) ---
     const loginFormContainer = document.getElementById('login-form-container');
-    const registerFormContainer = document.getElementById('register-form-container');
-    const showRegisterLink = document.getElementById('show-register');
-    const showLoginLink = document.getElementById('show-login');
 
     if (loginFormContainer) { // Roda apenas na página login.html
+        const registerFormContainer = document.getElementById('register-form-container');
+        const showRegisterLink = document.getElementById('show-register');
+        const showLoginLink = document.getElementById('show-login');
+
         showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
             loginFormContainer.style.display = 'none';
@@ -48,6 +49,52 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             registerFormContainer.style.display = 'none';
             loginFormContainer.style.display = 'block';
+        });
+
+        // --- FORMATAÇÃO AUTOMÁTICA DE CAMPOS ---
+        const cpfInput = document.getElementById('cpf');
+        const phoneInput = document.getElementById('phone');
+
+        cpfInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = value;
+        });
+
+        phoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+            value = value.replace(/(\d{5})(\d)/, '$1-$2');
+            e.target.value = value;
+        });
+
+        // --- VALIDAÇÃO DE SENHA EM TEMPO REAL ---
+        const passwordInput = document.getElementById('register-password');
+        const reqs = {
+            length: document.getElementById('req-length'),
+            lowercase: document.getElementById('req-lowercase'),
+            uppercase: document.getElementById('req-uppercase'),
+            number: document.getElementById('req-number')
+        };
+        let passwordIsValid = false;
+
+        passwordInput.addEventListener('input', () => {
+            const value = passwordInput.value;
+            const validations = {
+                length: value.length >= 8,
+                lowercase: /[a-z]/.test(value),
+                uppercase: /[A-Z]/.test(value),
+                number: /[0-9]/.test(value)
+            };
+
+            reqs.length.classList.toggle('valid', validations.length);
+            reqs.lowercase.classList.toggle('valid', validations.lowercase);
+            reqs.uppercase.classList.toggle('valid', validations.uppercase);
+            reqs.number.classList.toggle('valid', validations.number);
+
+            passwordIsValid = Object.values(validations).every(Boolean);
         });
 
         // --- CONEXÃO REAL: LOGIN ---
@@ -70,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.message || 'Erro ao tentar entrar.');
                 }
 
-                localStorage.setItem('loggedInUser', data.user.name);
+                localStorage.setItem('loggedInUser', data.user.firstName);
                 window.location.href = 'index.html';
 
             } catch (error) {
@@ -83,7 +130,13 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const name = document.getElementById('register-name').value;
+            if (!passwordIsValid) {
+                showNotification('Por favor, cumpra todos os requisitos da senha.', 'info');
+                return;
+            }
+
+            const firstName = document.getElementById('register-firstName').value;
+            const lastName = document.getElementById('register-lastName').value;
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
             const confirm_password = document.getElementById('confirm-password').value;
@@ -102,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, confirm_password, school, grade, course, phone, cpf })
+                    body: JSON.stringify({ firstName, lastName, email, password, confirm_password, school, grade, course, phone, cpf })
                 });
 
                 const data = await response.json();
@@ -113,8 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 showNotification(data.message);
                 
-                // Após registro, loga o usuário automaticamente
-                localStorage.setItem('loggedInUser', name);
+                localStorage.setItem('loggedInUser', firstName);
                 setTimeout(() => window.location.href = 'index.html', 1500);
 
             } catch (error) {
@@ -125,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- FUNÇÕES DE UI ---
-    function showNotification(message, type = 'success') { // 'success' or 'info'
+    function showNotification(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
         const notification = document.createElement('div');
@@ -158,7 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
             lastScrollY = window.scrollY;
         });
     }
-
 
     // --- ANIMAÇÕES E EFEITOS VISUAIS ---
     const observer = new IntersectionObserver((entries) => {
@@ -341,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
     
-            const phoneNumber = '5511914521982'; // Incluindo o código do país
+            const phoneNumber = '5511914521982';
             let message = 'E aí! Vim pelo site e quero levar os seguintes jogos:\n\n';
             let total = 0;
     
@@ -405,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CHAMADAS INICIAIS ---
     checkLoginState(); // Sempre verifica o estado do login
     
-    // Roda lógicas específicas da página principal
     if (document.querySelector('.game-grid')) {
       filterAndShowGames();
       if(liveFeedContainer) startLiveFeed();

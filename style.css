@@ -830,3 +830,125 @@ body {
         transform: rotate(-45deg) translate(7px, -7px);
     }
 }
+
+/* --- Página e Formulários de Login/Registro --- */
+.login-page-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+.logo--standalone {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 480px; /* Aumentado para acomodar os novos campos */
+    padding: 40px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.form-title {
+    font-family: var(--font-heading);
+    text-align: center;
+    color: var(--heading-color);
+    margin-bottom: 30px;
+    font-size: 2rem;
+    text-shadow: 0 0 10px var(--primary-color);
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .input-group {
+    flex: 1;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: rgba(2, 10, 26, 0.8);
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    outline: none;
+    transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+.input-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 1em;
+}
+
+/* --- Checklist de Senha --- */
+.password-reqs {
+    list-style: none;
+    margin: -10px 0 20px 0;
+    padding: 0;
+    font-size: 0.85rem;
+    color: #a0a0a0;
+}
+
+.password-reqs li {
+    transition: color 0.3s;
+}
+
+.password-reqs li.valid {
+    color: var(--primary-color);
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+
+.form-button {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.form-toggle-text {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.9rem;
+}
+
+.form-toggle-text a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}

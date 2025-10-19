@@ -4,14 +4,15 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
-    name: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     school: { type: String, required: true },
     grade: { type: String, required: true },
     course: { type: String, required: true },
-    phone: { type: String },
-    cpf: { type: String },
+    phone: { type: String, required: true },
+    cpf: { type: String, required: true, unique: true },
 }, { timestamps: true });
 
 // O Ferreiro de Senhas: Antes de salvar um novo membro, este ritual é executado

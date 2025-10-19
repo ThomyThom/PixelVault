@@ -8,25 +8,29 @@ const User = require('../models/User'); // Importa o blueprint do membro
 // ROTA DE REGISTRO: /api/auth/register
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password, confirm_password, school, grade, course, phone, cpf } = req.body;
+        const { firstName, lastName, email, password, confirm_password, school, grade, course, phone, cpf } = req.body;
 
         // Validações essenciais
         if (password !== confirm_password) {
             return res.status(400).json({ message: 'As senhas não coincidem.' });
         }
-
-        let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ message: 'Este email já possui uma chave forjada.' });
+        
+        // Validação de força da senha no back-end
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ message: 'A senha não cumpre os requisitos de segurança.' });
         }
 
-        // Cria uma nova identidade baseada no blueprint
-        user = new User({ name, email, password, school, grade, course, phone, cpf });
+        let user = await User.findOne({ email });
+        if (user) { /* ... */ }
+        
+        let userByCpf = await User.findOne({ cpf });
+        if (userByCpf) {
+            return res.status(400).json({ message: 'Este CPF já está registrado.' });
+        }
 
-        // Salva a nova identidade no grande livro de registros (o ritual do ferreiro de senhas será ativado)
+        user = new User({ firstName, lastName, email, password, school, grade, course, phone, cpf });
         await user.save();
-
-        // Responde com sucesso
         res.status(201).json({ message: 'Chave forjada com sucesso! Bem-vindo ao clube.' });
 
     } catch (error) {
@@ -55,10 +59,10 @@ router.post('/login', async (req, res) => {
         res.status(200).json({ 
             message: 'Acesso concedido.',
             user: {
-                name: user.name
+                firstName: user.firstName // Envia apenas o primeiro nome
             }
         });
-
+        
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Erro no servidor ao tentar acessar o cofre.');
