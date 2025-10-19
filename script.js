@@ -211,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     // --- ANIMAÇÕES E EFEITOS VISUAIS ---
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -385,11 +384,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // --- LÓGICA DE CHECKOUT VIA WHATSAPP ---
+    // --- LÓGICA DE CHECKOUT (ATUALIZADA) ---
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', () => {
+            const loggedInUser = localStorage.getItem('loggedInUser');
+
+            if (!loggedInUser) {
+                showNotification('Você precisa estar logado para finalizar a compra.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+
             if (cart.length === 0) {
-                showNotification('Seu carrinho está vazio para finalizar!', 'error');
+                showNotification('Seu carrinho está vazio!', 'error');
                 return;
             }
     
@@ -455,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- CHAMADAS INICIAIS ---
-    checkLoginState(); // Sempre verifica o estado do login
+    checkLoginState();
     
     if (document.querySelector('.game-grid')) {
       filterAndShowGames();
