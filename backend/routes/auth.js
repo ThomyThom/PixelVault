@@ -16,7 +16,7 @@ router.post('/register', async (req, res) => {
         }
         
         // Validação de força da senha no back-end
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ message: 'A senha não cumpre os requisitos de segurança.' });
         }
