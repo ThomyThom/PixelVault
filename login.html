@@ -34,9 +34,15 @@
         <div id="register-form-container" style="display: none;">
             <h1 class="form-title">Forjar uma Nova Chave</h1>
             <form id="register-form">
-                <div class="input-group">
-                    <label for="register-name">Nome Completo</label>
-                    <input type="text" id="register-name" name="name" required>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="register-firstName">Nome</label>
+                        <input type="text" id="register-firstName" name="firstName" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="register-lastName">Sobrenome</label>
+                        <input type="text" id="register-lastName" name="lastName" required>
+                    </div>
                 </div>
                  <div class="input-group">
                     <label for="register-email">Email</label>
@@ -46,6 +52,12 @@
                     <label for="register-password">Senha</label>
                     <input type="password" id="register-password" name="password" required>
                 </div>
+                <ul class="password-reqs">
+                    <li id="req-length">Pelo menos 8 caracteres</li>
+                    <li id="req-lowercase">Uma letra minúscula</li>
+                    <li id="req-uppercase">Uma letra maiúscula</li>
+                    <li id="req-number">Pelo menos um número</li>
+                </ul>
                 <div class="input-group">
                     <label for="confirm-password">Confirme a Senha</label>
                     <input type="password" id="confirm-password" name="confirm_password" required>
@@ -58,35 +70,37 @@
                         <option value="singular">Colégio Singular</option>
                     </select>
                 </div>
-                <div class="input-group">
-                    <label for="grade">Série</label>
-                    <select id="grade" name="grade" required>
-                        <option value="" disabled selected>Selecione seu ano...</option>
-                        <option value="1">1º Ano</option>
-                        <option value="2">2º Ano</option>
-                        <option value="3">3º Ano</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="course">Curso</label>
-                    <select id="course" name="course" required>
-                        <option value="" disabled selected>Selecione sua especialidade...</option>
-                        <option value="academico">Acadêmico</option>
-                        <option value="informatica">Informática</option>
-                        <option value="mecatronica">Mecatrônica</option>
-                        <option value="midias">Mídias</option>
-                        <option value="publicidade">Publicidade</option>
-                        <option value="quimica">Química</option>
-                        <option value="administracao">Administração</option>
-                    </select>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="grade">Série</label>
+                        <select id="grade" name="grade" required>
+                            <option value="" disabled selected>Seu ano...</option>
+                            <option value="1">1º Ano</option>
+                            <option value="2">2º Ano</option>
+                            <option value="3">3º Ano</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="course">Curso</label>
+                        <select id="course" name="course" required>
+                            <option value="" disabled selected>Sua especialidade...</option>
+                            <option value="academico">Acadêmico</option>
+                            <option value="informatica">Informática</option>
+                            <option value="mecatronica">Mecatrônica</option>
+                            <option value="midias">Mídias</option>
+                            <option value="publicidade">Publicidade</option>
+                            <option value="quimica">Química</option>
+                            <option value="administracao">Administração</option>
+                        </select>
+                    </div>
                 </div>
                  <div class="input-group">
                     <label for="phone">Número de Telefone</label>
-                    <input type="tel" id="phone" name="phone" placeholder="(11) 99999-9999">
+                    <input type="tel" id="phone" name="phone" placeholder="(11) 99999-9999" maxlength="15" required>
                 </div>
                  <div class="input-group">
                     <label for="cpf">CPF</label>
-                    <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00">
+                    <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" required>
                 </div>
                 <button type="submit" class="cta-button form-button">Registrar</button>
             </form>
