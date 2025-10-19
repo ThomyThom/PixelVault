@@ -1,28 +1,164 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- LÓGICA DE AUTENTICAÇÃO E UI (AGORA REAL) ---
+    const loginLink = document.getElementById('login-link');
+    const userNavItems = document.querySelectorAll('.user-nav');
+    const userNameLink = document.getElementById('user-name-link');
+    const logoutLink = document.getElementById('logout-link');
+
+    function checkLoginState() {
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            if(loginLink) loginLink.style.display = 'none';
+            if(userNameLink) userNameLink.textContent = loggedInUser;
+            userNavItems.forEach(item => {
+                if(item) item.style.display = 'block';
+            });
+        } else {
+            if(loginLink) loginLink.style.display = 'block';
+            userNavItems.forEach(item => {
+                if(item) item.style.display = 'none';
+            });
+        }
+    }
+    
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('loggedInUser');
+            showNotification('Sessão encerrada. Até a próxima!');
+            setTimeout(() => window.location.href = 'index.html', 1000);
+        });
+    }
+
+    // --- LÓGICA DA PÁGINA DE LOGIN (CONECTADA AO BACK-END) ---
+    const loginFormContainer = document.getElementById('login-form-container');
+    const registerFormContainer = document.getElementById('register-form-container');
+    const showRegisterLink = document.getElementById('show-register');
+    const showLoginLink = document.getElementById('show-login');
+
+    if (loginFormContainer) { // Roda apenas na página login.html
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginFormContainer.style.display = 'none';
+            registerFormContainer.style.display = 'block';
+        });
+
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerFormContainer.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+        });
+
+        // --- CONEXÃO REAL: LOGIN ---
+        const loginForm = document.getElementById('login-form');
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro ao tentar entrar.');
+                }
+
+                localStorage.setItem('loggedInUser', data.user.name);
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                showNotification(error.message, 'info');
+            }
+        });
+
+        // --- CONEXÃO REAL: REGISTRO ---
+        const registerForm = document.getElementById('register-form');
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirm_password = document.getElementById('confirm-password').value;
+            const school = document.getElementById('school').value;
+            const grade = document.getElementById('grade').value;
+            const course = document.getElementById('course').value;
+            const phone = document.getElementById('phone').value;
+            const cpf = document.getElementById('cpf').value;
+
+            if (password !== confirm_password) {
+                showNotification('As senhas não coincidem.', 'info');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, confirm_password, school, grade, course, phone, cpf })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro ao registrar.');
+                }
+
+                showNotification(data.message);
+                
+                // Após registro, loga o usuário automaticamente
+                localStorage.setItem('loggedInUser', name);
+                setTimeout(() => window.location.href = 'index.html', 1500);
+
+            } catch (error) {
+                showNotification(error.message, 'info');
+            }
+        });
+    }
+
+
     // --- FUNÇÕES DE UI ---
     function showNotification(message, type = 'success') { // 'success' or 'info'
         const container = document.getElementById('notification-container');
+        if (!container) return;
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
 
         container.appendChild(notification);
         
-        // Trigger the animation
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
 
-        // Remove the notification after some time
         setTimeout(() => {
             notification.classList.remove('show');
-            // Remove from DOM after transition ends
-            notification.addEventListener('transitionend', () => {
-                notification.remove();
-            });
+            notification.addEventListener('transitionend', () => notification.remove());
         }, 3000);
     }
+
+    // --- CABEÇALHO INTELIGENTE (SMART HEADER) ---
+    const header = document.querySelector('.site-header');
+    if (header) {
+        let lastScrollY = window.scrollY;
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > lastScrollY && window.scrollY > 150) {
+                header.classList.add('site-header--scrolled');
+            } else if (window.scrollY < lastScrollY) {
+                header.classList.remove('site-header--scrolled');
+            }
+            lastScrollY = window.scrollY;
+        });
+    }
+
 
     // --- ANIMAÇÕES E EFEITOS VISUAIS ---
     const observer = new IntersectionObserver((entries) => {
@@ -50,10 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MENU MOBILE ---
     const menuToggle = document.querySelector('.mobile-menu-toggle');
     const nav = document.querySelector('.main-nav');
-    menuToggle.addEventListener('click', () => {
-        menuToggle.classList.toggle('is-active');
-        nav.classList.toggle('is-active');
-    });
+    if (menuToggle && nav) {
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('is-active');
+            nav.classList.toggle('is-active');
+        });
+    }
 
     // --- FILTROS E PESQUISA ---
     const searchBar = document.getElementById('search-bar');
@@ -66,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialVisibleCount = 8;
     
     function filterAndShowGames() {
+        if (!searchBar) return;
         const searchTerm = searchBar.value.toLowerCase();
         let visibleGames = [];
 
@@ -75,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const searchMatch = title.includes(searchTerm);
             const categoryMatch = activeCategory === 'all' || category.includes(activeCategory);
 
-            card.style.display = 'none'; // Hide all cards initially
+            card.style.display = 'none';
             card.classList.remove('is-visible');
             if (searchMatch && categoryMatch) {
                 visibleGames.push(card);
@@ -85,36 +224,40 @@ document.addEventListener('DOMContentLoaded', () => {
         visibleGames.forEach((card, index) => {
             if (index < initialVisibleCount) {
                 card.style.display = 'block';
-                setTimeout(() => card.classList.add('is-visible'), 10); // Trigger animation
+                setTimeout(() => card.classList.add('is-visible'), 10);
             }
         });
 
-        noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
-        loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
+        if (noResultsMessage) noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
+        if (loadMoreBtn) loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
         
         observeAnimatedElements();
     }
 
-    searchBar.addEventListener('input', filterAndShowGames);
-    categoryBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            categoryBtns.forEach(b => b.classList.remove('is-active'));
-            btn.classList.add('is-active');
-            activeCategory = btn.dataset.category;
-            filterAndShowGames();
+    if (searchBar) searchBar.addEventListener('input', filterAndShowGames);
+    if (categoryBtns.length > 0) {
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                categoryBtns.forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                activeCategory = btn.dataset.category;
+                filterAndShowGames();
+            });
         });
-    });
+    }
 
     // --- LÓGICA "CARREGAR MAIS" ---
-    loadMoreBtn.addEventListener('click', () => {
-        const hiddenCards = Array.from(document.querySelectorAll('.game-card')).filter(card => card.style.display === 'none');
-        hiddenCards.forEach(card => {
-            card.style.display = 'block';
-             setTimeout(() => card.classList.add('is-visible'), 10);
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', () => {
+            const hiddenCards = Array.from(document.querySelectorAll('.game-card')).filter(card => card.style.display === 'none');
+            hiddenCards.forEach(card => {
+                card.style.display = 'block';
+                 setTimeout(() => card.classList.add('is-visible'), 10);
+            });
+            loadMoreBtn.style.display = 'none';
+            observeAnimatedElements();
         });
-        loadMoreBtn.style.display = 'none';
-        observeAnimatedElements();
-    });
+    }
 
     // --- LÓGICA DO CARRINHO ---
     const cartIcon = document.getElementById('cart-icon');
@@ -123,35 +266,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartItemsContainer = document.getElementById('cart-items');
     const cartCountEl = document.getElementById('cart-count');
     const cartTotalEl = document.getElementById('cart-total');
-    const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+    const addToCartBtns = document.querySelectorAll('.add-cart-icon-btn');
+    const checkoutBtn = document.querySelector('.checkout-btn');
 
     let cart = [];
 
-    cartIcon.addEventListener('click', () => cartOverlay.classList.add('is-active'));
-    closeCartBtn.addEventListener('click', () => cartOverlay.classList.remove('is-active'));
-    cartOverlay.addEventListener('click', (e) => {
+    if (cartIcon) cartIcon.addEventListener('click', () => cartOverlay.classList.add('is-active'));
+    if (closeCartBtn) closeCartBtn.addEventListener('click', () => cartOverlay.classList.remove('is-active'));
+    if (cartOverlay) cartOverlay.addEventListener('click', (e) => {
         if (e.target === cartOverlay) cartOverlay.classList.remove('is-active');
     });
 
-    addToCartBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.game-card');
-            const title = card.querySelector('h3').textContent;
-            const price = 20.00;
-            const imageSrc = card.querySelector('img').src;
-            const itemId = title;
-
-            if (cart.find(item => item.id === itemId)) {
-                showNotification(`"${title}" já está no seu carrinho.`, 'info');
-                return;
-            }
-            cart.push({ id: itemId, title, price, imageSrc });
-            updateCart();
-            showNotification(`"${title}" foi adicionado ao carrinho!`);
+    if (addToCartBtns.length > 0) {
+        addToCartBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.game-card');
+                const title = card.querySelector('h3').textContent;
+                const price = 20.00;
+                const imageSrc = card.querySelector('img').src;
+                const itemId = title;
+    
+                if (cart.find(item => item.id === itemId)) {
+                    showNotification(`"${title}" já está no seu carrinho.`, 'info');
+                    return;
+                }
+                cart.push({ id: itemId, title, price, imageSrc });
+                updateCart();
+                showNotification(`"${title}" foi adicionado ao carrinho!`);
+            });
         });
-    });
+    }
 
     function updateCart() {
+        if (!cartItemsContainer) return;
         cartItemsContainer.innerHTML = '';
         let total = 0;
         
@@ -174,8 +321,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        cartCountEl.textContent = cart.length;
-        cartTotalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        if (cartCountEl) cartCountEl.textContent = cart.length;
+        if (cartTotalEl) cartTotalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
         document.querySelectorAll('.remove-item-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -185,7 +332,82 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+    
+    // --- LÓGICA DE CHECKOUT VIA WHATSAPP ---
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+                showNotification('Seu carrinho está vazio para finalizar!', 'info');
+                return;
+            }
+    
+            const phoneNumber = '5511914521982'; // Incluindo o código do país
+            let message = 'E aí! Vim pelo site e quero levar os seguintes jogos:\n\n';
+            let total = 0;
+    
+            cart.forEach(item => {
+                message += `- ${item.title}\n`;
+                total += item.price;
+            });
+    
+            message += `\nO valor total ficou R$ ${total.toFixed(2).replace('.', ',')}. Como posso realizar o pagamento?`;
+    
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    
+            window.open(whatsappUrl, '_blank');
+        });
+    }
 
-    // Initial filter call on page load
-    filterAndShowGames();
+    // --- FEED DE ATIVIDADE AO VIVO ---
+    const liveFeedContainer = document.getElementById('live-feed-container');
+    if (liveFeedContainer) {
+        const fakeNames = ["Lucas", "Julia", "Matheus", "Beatriz", "Gabriel", "Mariana", "Pedro", "Ana", "Rafael", "Larissa"];
+        const gameTitles = Array.from(document.querySelectorAll('.game-card h3')).map(h3 => h3.textContent);
+
+        function createFakePurchaseNotification() {
+            if(gameTitles.length === 0) return;
+            const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+            const game = gameTitles[Math.floor(Math.random() * gameTitles.length)];
+    
+            const notification = document.createElement('div');
+            notification.className = 'feed-notification';
+            
+            const avatarLetter = name.charAt(0);
+    
+            notification.innerHTML = `
+                <div class="avatar" aria-hidden="true">${avatarLetter}</div>
+                <div class="text-content">
+                    <strong>${name}</strong>
+                    <span>acabou de pegar <span class="game-title">${game}</span></span>
+                </div>
+            `;
+            
+            liveFeedContainer.appendChild(notification);
+    
+            setTimeout(() => notification.classList.add('show'), 100);
+    
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => notification.remove());
+            }, 5000);
+        }
+
+        function startLiveFeed() {
+            const randomDelay = Math.random() * (8000 - 4000) + 4000; // Entre 4 e 8 segundos
+            setTimeout(() => {
+                createFakePurchaseNotification();
+                startLiveFeed();
+            }, randomDelay);
+        }
+    }
+
+    // --- CHAMADAS INICIAIS ---
+    checkLoginState(); // Sempre verifica o estado do login
+    
+    // Roda lógicas específicas da página principal
+    if (document.querySelector('.game-grid')) {
+      filterAndShowGames();
+      if(liveFeedContainer) startLiveFeed();
+    }
 });
