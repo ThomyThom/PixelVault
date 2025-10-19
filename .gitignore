@@ -1,5 +1,13 @@
+[safe]
+    directory = F:/~~sedencia maxima vendas~~
+
 # Dependências do Node
 node_modules
 
 # Arquivos de ambiente
 .env
+
+
+SedenciaSteam.bat
+adminbypass.bat
+st-setup-1.8.17r2.exe
