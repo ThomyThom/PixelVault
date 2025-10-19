@@ -196,6 +196,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    // --- LÓGICA DO MODAL DE LOGIN ---
+    const loginModalOverlay = document.getElementById('login-modal-overlay');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalActionBtn = document.getElementById('modal-action-btn');
+
+    function openLoginModal() {
+        if (loginModalOverlay) loginModalOverlay.classList.add('is-active');
+    }
+    function closeLoginModal() {
+        if (loginModalOverlay) loginModalOverlay.classList.remove('is-active');
+    }
+
+    if (loginModalOverlay) {
+        modalCloseBtn.addEventListener('click', closeLoginModal);
+        modalActionBtn.addEventListener('click', () => {
+            window.location.href = 'login.html';
+        });
+        loginModalOverlay.addEventListener('click', (e) => {
+            if (e.target === loginModalOverlay) {
+                closeLoginModal();
+            }
+        });
+    }
+
     // --- CABEÇALHO INTELIGENTE (SMART HEADER) ---
     const header = document.querySelector('.site-header');
     if (header) {
@@ -210,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lastScrollY = window.scrollY;
         });
     }
+
 
     // --- ANIMAÇÕES E EFEITOS VISUAIS ---
     const observer = new IntersectionObserver((entries) => {
@@ -384,16 +409,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // --- LÓGICA DE CHECKOUT (ATUALIZADA) ---
+    // --- LÓGICA DE CHECKOUT (COM MODAL) ---
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', () => {
             const loggedInUser = localStorage.getItem('loggedInUser');
 
             if (!loggedInUser) {
-                showNotification('Você precisa estar logado para finalizar a compra.', 'error');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
+                openLoginModal();
                 return;
             }
 
@@ -455,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function startLiveFeed() {
-            const randomDelay = Math.random() * (8000 - 4000) + 4000; // Entre 4 e 8 segundos
+            const randomDelay = Math.random() * (8000 - 4000) + 4000;
             setTimeout(() => {
                 createFakePurchaseNotification();
                 startLiveFeed();
