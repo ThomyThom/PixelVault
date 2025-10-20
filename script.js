@@ -300,28 +300,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gameCards.forEach(card => {
             const title = card.querySelector('h3').textContent.toLowerCase();
-            const category = card.dataset.category;
-            const searchMatch = title.includes(searchTerm);
-            const categoryMatch = activeCategory === 'all' || category.includes(activeCategory);
+            const category = card.dataset.category || ''; // Pega categorias do jogo
+            const sizeGB = parseFloat(card.dataset.sizeGb || 'Infinity'); // Pega o tamanho do jogo
 
+            const searchMatch = title.includes(searchTerm);
+            
+            // LÓGICA DE FILTRO ATUALIZADA
+            let categoryMatch = false;
+            if (activeCategory === 'all') {
+                categoryMatch = true; // Mostra todos se 'Todos' está ativo
+            } else if (activeCategory === 'school') {
+                categoryMatch = sizeGB < 10; // Mostra se for menor que 10GB para o filtro 'school'
+            } else {
+                categoryMatch = category.includes(activeCategory); // Verifica se a categoria do jogo inclui o filtro ativo
+            }
+
+            // Esconde todos os cards inicialmente
             card.style.display = 'none';
             card.classList.remove('is-visible');
+
+            // Adiciona à lista de visíveis se passar nos filtros
             if (searchMatch && categoryMatch) {
                 visibleGames.push(card);
             }
         });
 
+        // Mostra os primeiros 'initialVisibleCount' cards da lista filtrada
         visibleGames.forEach((card, index) => {
             if (index < initialVisibleCount) {
                 card.style.display = 'block';
-                setTimeout(() => card.classList.add('is-visible'), 10);
+                // Adiciona um pequeno delay para a animação funcionar corretamente ao filtrar
+                setTimeout(() => card.classList.add('is-visible'), 10 * index); 
             }
         });
 
+        // Atualiza a mensagem de "nenhum resultado" e o botão "Carregar Mais"
         if (noResultsMessage) noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
         if (loadMoreBtn) loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
         
-        observeAnimatedElements();
+        // Re-observa elementos para animação (caso novos itens apareçam)
+        observeAnimatedElements(); 
     }
 
     if (searchBar) searchBar.addEventListener('input', filterAndShowGames);
@@ -331,20 +349,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 categoryBtns.forEach(b => b.classList.remove('is-active'));
                 btn.classList.add('is-active');
                 activeCategory = btn.dataset.category;
-                filterAndShowGames();
+                filterAndShowGames(); // Chama a função de filtro atualizada
             });
         });
     }
 
-    // --- LÓGICA "CARREGAR MAIS" ---
+    // --- LÓGICA "CARREGAR MAIS" (ATUALIZADA PARA RESPEITAR FILTROS) ---
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', () => {
-            const hiddenCards = Array.from(document.querySelectorAll('.game-card')).filter(card => card.style.display === 'none');
-            hiddenCards.forEach(card => {
+            // Seleciona apenas os cards que estão escondidos MAS deveriam estar visíveis pelo filtro atual
+             const searchTerm = searchBar.value.toLowerCase();
+             const hiddenFilteredCards = Array.from(gameCards).filter(card => {
+                 if (card.style.display !== 'none') return false; // Ignora os já visíveis
+
+                 const title = card.querySelector('h3').textContent.toLowerCase();
+                 const category = card.dataset.category || '';
+                 const sizeGB = parseFloat(card.dataset.sizeGb || 'Infinity');
+                 const searchMatch = title.includes(searchTerm);
+                 let categoryMatch = false;
+                 if (activeCategory === 'all') categoryMatch = true;
+                 else if (activeCategory === 'school') categoryMatch = sizeGB < 10;
+                 else categoryMatch = category.includes(activeCategory);
+                 
+                 return searchMatch && categoryMatch;
+             });
+
+            // Mostra os cards escondidos que passaram no filtro
+            hiddenFilteredCards.forEach((card, index) => {
                 card.style.display = 'block';
-                 setTimeout(() => card.classList.add('is-visible'), 10);
+                 setTimeout(() => card.classList.add('is-visible'), 10 * index);
             });
-            loadMoreBtn.style.display = 'none';
+
+            loadMoreBtn.style.display = 'none'; // Esconde o botão após carregar
             observeAnimatedElements();
         });
     }
@@ -510,4 +546,3 @@ document.addEventListener('DOMContentLoaded', () => {
       if(liveFeedContainer) startLiveFeed(); // Inicia o feed apenas na pág principal
     }
 });
-
