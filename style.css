@@ -19,6 +19,7 @@
 }
 
 html {
+    scroll-padding-top: calc(var(--header-height) + 20px);
     scroll-behavior: smooth;
 }
 
@@ -164,10 +165,21 @@ body {
     z-index: 1000;
     height: var(--header-height);
     transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    height: var(--header-height);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* A MUDANÇA ESTÁ AQUI */
 }
 
 .site-header .container > *:not(.header-actions) {
     transition: opacity 0.4s, transform 0.4s, visibility 0.4s;
+}
+
+/* NOVA CLASSE PARA OCULTAR O CABEÇALHO INTEIRO */
+.site-header--hidden {
+    transform: translateY(-100%);
 }
 
 .site-header--scrolled {

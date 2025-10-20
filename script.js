@@ -101,8 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 reqs.number.classList.toggle('valid', validations.number);
                 passwordIsValid = Object.values(validations).every(Boolean);
             });
-        } else {
-             passwordIsValid = true; 
         }
 
         if (loginForm) {
@@ -191,21 +189,26 @@ document.addEventListener('DOMContentLoaded', () => {
         function openLoginModal() { loginModalOverlay.classList.add('is-active'); }
         function closeLoginModal() { loginModalOverlay.classList.remove('is-active'); }
 
-        modalCloseBtn.addEventListener('click', closeLoginModal);
-        modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
+        // Adiciona listeners apenas se os botões existirem
+        if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
+        if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
         loginModalOverlay.addEventListener('click', (e) => {
             if (e.target === loginModalOverlay) closeLoginModal();
         });
     }
 
+    // --- CABEÇALHO INTELIGENTE (SMART HEADER - COREOGRAFIA ATUALIZADA) ---
     const header = document.querySelector('.site-header');
     if (header) {
         let lastScrollY = window.scrollY;
+
         window.addEventListener('scroll', () => {
             if (window.scrollY > lastScrollY && window.scrollY > 150) {
-                header.classList.add('site-header--scrolled');
-            } else if (window.scrollY < lastScrollY) {
-                header.classList.remove('site-header--scrolled');
+                // Ao rolar para baixo, esconde o cabeçalho
+                header.classList.add('site-header--hidden');
+            } else {
+                // Ao rolar para cima, mostra o cabeçalho
+                header.classList.remove('site-header--hidden');
             }
             lastScrollY = window.scrollY;
         });
@@ -323,8 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkoutBtn = document.querySelector('.checkout-btn');
         let cart = [];
 
-        if (cartIcon) cartIcon.addEventListener('click', () => cartOverlay.classList.add('is-active'));
-        if (closeCartBtn) closeCartBtn.addEventListener('click', () => cartOverlay.classList.remove('is-active'));
+        if (cartIcon) cartIcon.addEventListener('click', () => { if (cartOverlay) cartOverlay.classList.add('is-active'); });
+        if (closeCartBtn) closeCartBtn.addEventListener('click', () => { if (cartOverlay) cartOverlay.classList.remove('is-active'); });
         if (cartOverlay) cartOverlay.addEventListener('click', (e) => {
             if (e.target === cartOverlay) cartOverlay.classList.remove('is-active');
         });
@@ -377,7 +380,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
                 const loggedInUser = localStorage.getItem('loggedInUser');
-                if (!loggedInUser) { openLoginModal(); return; }
+                if (!loggedInUser) {
+                    // A função openLoginModal já está guardada por `if(loginModalOverlay)`
+                    if (typeof openLoginModal === 'function') openLoginModal(); 
+                    return; 
+                }
                 if (cart.length === 0) { showNotification('Seu carrinho está vazio!', 'error'); return; }
                 const phoneNumber = '5511914521982'; let message = 'E aí! Vim pelo site e quero levar os seguintes jogos:\n\n'; let total = 0;
                 cart.forEach(item => { message += `- ${item.title}\n`; total += item.price; });
