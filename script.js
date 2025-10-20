@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const registerFormContainer = document.getElementById('register-form-container');
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
+        const registerForm = document.getElementById('register-form');
 
         showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -126,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // --- CONEXÃO REAL: REGISTRO ---
-        const registerForm = document.getElementById('register-form');
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -164,17 +164,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.message || 'Erro ao registrar.');
                 }
 
-                showNotification(data.message);
-                
-                localStorage.setItem('loggedInUser', firstName);
-                setTimeout(() => window.location.href = 'index.html', 1500);
+                showNotification(data.message, 'success');
+                registerForm.reset();
+                showLoginLink.click();
 
             } catch (error) {
                 showNotification(error.message, 'error');
             }
         });
     }
-
 
     // --- FUNÇÕES DE UI ---
     function showNotification(message, type = 'success') {
@@ -234,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
             lastScrollY = window.scrollY;
         });
     }
-
 
     // --- ANIMAÇÕES E EFEITOS VISUAIS ---
     const observer = new IntersectionObserver((entries) => {
@@ -445,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FEED DE ATIVIDADE AO VIVO ---
     const liveFeedContainer = document.getElementById('live-feed-container');
     if (liveFeedContainer) {
-        const fakeNames = ["Gabriel", "Isabella", "Caetano", "Camila", "Dante", "Alice", "Eduardo", "Elisa", "Matheus", "Vitória", "Gael", "Beatriz", "Benício", "Yara", "Guilherme", "Maitê", "Daniel", "Heitor", "Laura", "Otávio", "Jade", "João", "Estela", "Silas", "Valentina", "Leonardo", "Ana", "Rafael", "Celina", "Felipe", "Fernanda", "Lucas", "Lorena", "Nilo", "Manuela", "Pedro", "Raíssa", "Ravi", "Mariana", "Uriel", "Giovanna", "Bruno", "Íris", "Gustavo", "Clarice", "Valentin", "Julia", "Bento", "Amélia", "Vinicius", "Luiza", "Leandro", "Olívia", "Cauã", "Serena", "Thiago", "Helena", "Thales", "Larissa", "Enzo", "Maia", "Estevão", "Sophia", "Arthur", "Tainá", "Miguel", "Letícia", "Davi", "Aurora", "Gabriela"];
+        const fakeNames = ["Lucas", "Julia", "Matheus", "Beatriz", "Gabriel", "Mariana", "Pedro", "Ana", "Rafael", "Larissa"];
         const gameTitles = Array.from(document.querySelectorAll('.game-card h3')).map(h3 => h3.textContent);
 
         function createFakePurchaseNotification() {
