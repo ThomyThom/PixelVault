@@ -1030,3 +1030,187 @@ body {
 .modal-action-btn {
     width: 100%;
 }
+
+/* --- NOVO: Estilos para Páginas de Conteúdo --- */
+.content-page {
+    padding-top: var(--header-height);
+}
+
+.hero-short {
+    padding: 80px 0;
+    text-align: center;
+}
+
+.hero-short h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    color: var(--heading-color);
+    line-height: 1.2;
+    text-shadow: 0 0 15px var(--primary-color);
+}
+
+.hero-short p {
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    max-width: 600px;
+    margin: 15px auto 0;
+    color: var(--text-color);
+}
+
+/* --- NOVO: Linha do Tempo Vertical --- */
+.timeline-section {
+    padding-bottom: 80px;
+}
+
+.timeline {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.timeline::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    background-color: var(--card-border);
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    margin-left: -1.5px;
+}
+
+.timeline-item {
+    padding: 10px 40px;
+    position: relative;
+    background-color: inherit;
+    width: 50%;
+}
+
+.timeline-item:nth-child(odd) {
+    left: 0;
+    padding-right: 70px;
+    text-align: right;
+}
+
+.timeline-item:nth-child(even) {
+    left: 50%;
+    padding-left: 70px;
+}
+
+.timeline-icon {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    right: -25px;
+    background-color: var(--bg-color);
+    border: 3px solid var(--primary-color);
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.timeline-icon svg {
+    stroke: var(--primary-color);
+}
+
+.timeline-item:nth-child(even) .timeline-icon {
+    left: -25px;
+}
+
+.timeline-content {
+    padding: 20px 30px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(5px);
+    position: relative;
+    border-radius: 6px;
+}
+
+.timeline-content h2 {
+    font-family: var(--font-heading);
+    color: var(--heading-color);
+    margin-bottom: 10px;
+}
+
+/* --- NOVO: Seção de FAQ --- */
+.faq-section {
+    padding: 40px 0 80px;
+}
+
+.faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    margin-bottom: 15px;
+    transition: box-shadow 0.3s;
+}
+
+.faq-item[open] {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.faq-item summary {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    color: var(--heading-color);
+    padding: 20px;
+    cursor: pointer;
+    list-style: none; /* Remove a seta padrão */
+    position: relative;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none; /* Remove a seta padrão no Chrome */
+}
+
+.faq-item summary::after { /* Adiciona uma seta customizada */
+    content: '+';
+    color: var(--primary-color);
+    font-size: 2rem;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.3s;
+}
+
+.faq-item[open] summary::after {
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.faq-item p {
+    padding: 0 20px 20px;
+    line-height: 1.7;
+}
+
+/* --- Responsividade para Timeline e FAQ --- */
+@media screen and (max-width: 768px) {
+    .timeline::after {
+        left: 31px;
+    }
+    .timeline-item {
+        width: 100%;
+        padding-left: 70px;
+        padding-right: 25px;
+    }
+    .timeline-item:nth-child(odd),
+    .timeline-item:nth-child(even) {
+        left: 0;
+        text-align: left;
+    }
+    .timeline-icon {
+        left: 6px;
+    }
+    .timeline-item:nth-child(odd) .timeline-icon,
+    .timeline-item:nth-child(even) .timeline-icon {
+        left: 6px;
+    }
+}
