@@ -11,8 +11,10 @@ const UserSchema = new mongoose.Schema({
     school: { type: String, required: true },
     grade: { type: String, required: true },
     course: { type: String, required: true },
-    phone: { type: String, required: true, unique: true }, // Unicidade adicionada
-    cpf: { type: String, required: true, unique: true },   // Unicidade adicionada
+    phone: { type: String, required: true, unique: true },
+    cpf: { type: String, required: true, unique: true },
+    isVerified: { type: Boolean, default: true }, // MUDOU: Agora é 'true' por padrão
+    // Campos de verificação REMOVIDOS
 }, { timestamps: true });
 
 UserSchema.pre('save', async function(next) {
