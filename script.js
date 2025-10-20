@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const registerFormContainer = document.getElementById('register-form-container');
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
-        const registerForm = document.getElementById('register-form');
 
         showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -127,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // --- CONEXÃO REAL: REGISTRO ---
+        const registerForm = document.getElementById('register-form');
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -164,15 +164,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.message || 'Erro ao registrar.');
                 }
 
-                showNotification(data.message, 'success');
-                registerForm.reset();
-                showLoginLink.click();
+                showNotification(data.message);
+                
+                localStorage.setItem('loggedInUser', firstName);
+                setTimeout(() => window.location.href = 'index.html', 1500);
 
             } catch (error) {
                 showNotification(error.message, 'error');
             }
         });
     }
+
 
     // --- FUNÇÕES DE UI ---
     function showNotification(message, type = 'success') {
@@ -232,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lastScrollY = window.scrollY;
         });
     }
+
 
     // --- ANIMAÇÕES E EFEITOS VISUAIS ---
     const observer = new IntersectionObserver((entries) => {
