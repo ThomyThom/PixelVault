@@ -1,5 +1,3 @@
-// models/User.js
-
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -11,8 +9,11 @@ const UserSchema = new mongoose.Schema({
     school: { type: String, required: true },
     grade: { type: String, required: true },
     course: { type: String, required: true },
-    phone: { type: String, required: true, unique: true }, // Unicidade adicionada
-    cpf: { type: String, required: true, unique: true },   // Unicidade adicionada
+    phone: { type: String, required: true, unique: true },
+    cpf: { type: String, required: true, unique: true },
+    isVerified: { type: Boolean, default: false }, // NOVO
+    emailVerificationToken: { type: String, select: false }, // NOVO (select: false para não enviar na resposta da API)
+    emailVerificationExpires: { type: Date, select: false }, // NOVO
 }, { timestamps: true });
 
 UserSchema.pre('save', async function(next) {
