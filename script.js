@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const registerFormContainer = document.getElementById('register-form-container');
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
+        const registerForm = document.getElementById('register-form');
 
         showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -55,20 +56,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const cpfInput = document.getElementById('cpf');
         const phoneInput = document.getElementById('phone');
 
-        cpfInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            e.target.value = value;
-        });
+        if (cpfInput) {
+            cpfInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = value;
+            });
+        }
 
-        phoneInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            value = value.replace(/^(\d{2})(\d)/, '($1) $2');
-            value = value.replace(/(\d{5})(\d)/, '$1-$2');
-            e.target.value = value;
-        });
+        if (phoneInput) {
+            phoneInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+                value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                e.target.value = value;
+            });
+        }
 
         // --- VALIDAÇÃO DE SENHA EM TEMPO REAL ---
         const passwordInput = document.getElementById('register-password');
@@ -80,22 +85,27 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         let passwordIsValid = false;
 
-        passwordInput.addEventListener('input', () => {
-            const value = passwordInput.value;
-            const validations = {
-                length: value.length >= 8,
-                lowercase: /[a-z]/.test(value),
-                uppercase: /[A-Z]/.test(value),
-                number: /[0-9]/.test(value)
-            };
+        if (passwordInput && reqs.length) { // Verifica se os elementos existem
+            passwordInput.addEventListener('input', () => {
+                const value = passwordInput.value;
+                const validations = {
+                    length: value.length >= 8,
+                    lowercase: /[a-z]/.test(value),
+                    uppercase: /[A-Z]/.test(value),
+                    number: /[0-9]/.test(value)
+                };
 
-            reqs.length.classList.toggle('valid', validations.length);
-            reqs.lowercase.classList.toggle('valid', validations.lowercase);
-            reqs.uppercase.classList.toggle('valid', validations.uppercase);
-            reqs.number.classList.toggle('valid', validations.number);
+                reqs.length.classList.toggle('valid', validations.length);
+                reqs.lowercase.classList.toggle('valid', validations.lowercase);
+                reqs.uppercase.classList.toggle('valid', validations.uppercase);
+                reqs.number.classList.toggle('valid', validations.number);
 
-            passwordIsValid = Object.values(validations).every(Boolean);
-        });
+                passwordIsValid = Object.values(validations).every(Boolean);
+            });
+        } else {
+             passwordIsValid = true; // Se não estiver na pág de registro, ignora validação de senha
+        }
+
 
         // --- CONEXÃO REAL: LOGIN ---
         const loginForm = document.getElementById('login-form');
@@ -126,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // --- CONEXÃO REAL: REGISTRO ---
-        const registerForm = document.getElementById('register-form');
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -164,10 +173,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.message || 'Erro ao registrar.');
                 }
 
-                showNotification(data.message);
+                showNotification(data.message, 'success'); // Mensagem de sucesso
                 
-                localStorage.setItem('loggedInUser', firstName);
-                setTimeout(() => window.location.href = 'index.html', 1500);
+                // RESTAURADO: Login automático após registro
+                localStorage.setItem('loggedInUser', data.user.firstName); 
+                setTimeout(() => window.location.href = 'index.html', 1500); // Redireciona
 
             } catch (error) {
                 showNotification(error.message, 'error');
@@ -192,7 +202,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(() => {
             notification.classList.remove('show');
-            notification.addEventListener('transitionend', () => notification.remove());
+            notification.addEventListener('transitionend', () => {
+               if(notification.parentNode) { // Verifica se ainda é filho antes de remover
+                   notification.remove();
+               }
+            });
         }, 3000);
     }
 
@@ -280,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialVisibleCount = 8;
     
     function filterAndShowGames() {
-        if (!searchBar) return;
+        if (!searchBar) return; // Só executa se estiver na página principal
         const searchTerm = searchBar.value.toLowerCase();
         let visibleGames = [];
 
@@ -472,7 +486,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
             setTimeout(() => {
                 notification.classList.remove('show');
-                notification.addEventListener('transitionend', () => notification.remove());
+                notification.addEventListener('transitionend', () => {
+                    if(notification.parentNode) notification.remove();
+                });
             }, 5000);
         }
 
@@ -486,10 +502,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- CHAMADAS INICIAIS ---
-    checkLoginState();
+    checkLoginState(); // Sempre verifica o estado do login
     
+    // Roda lógicas específicas da página principal (onde existe a .game-grid)
     if (document.querySelector('.game-grid')) {
       filterAndShowGames();
-      if(liveFeedContainer) startLiveFeed();
+      if(liveFeedContainer) startLiveFeed(); // Inicia o feed apenas na pág principal
     }
 });
+
