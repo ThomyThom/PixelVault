@@ -83,13 +83,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const animatedElements = document.querySelectorAll('.animate-on-scroll:not(.is-visible)');
         animatedElements.forEach(el => observer.observe(el));
     }
-    observeAnimatedElements();
-
+    
     const loadAnimatedElements = document.querySelectorAll('.animate-on-load');
     loadAnimatedElements.forEach((el, index) => {
         el.style.setProperty('--i', index);
         setTimeout(() => el.classList.add('is-visible'), 50 * (index + 1)); 
     });
+
+    // Atualiza o contador do carrinho em todas as páginas
+    const cartCountEl = document.getElementById('cart-count');
+    function updateCartCounter() {
+        const cart = JSON.parse(localStorage.getItem('pixelVaultCart')) || [];
+        if (cartCountEl) {
+            cartCountEl.textContent = cart.length;
+        }
+    }
 
 
     // --- BLOCO 2: LÓGICA DA PÁGINA DE LOGIN (Selada) ---
@@ -243,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target === loginModalOverlay) closeLoginModal();
             });
         }
-
+        
         const searchBar = document.getElementById('search-bar');
         const categoryBtns = document.querySelectorAll('.category-btn');
         const gameCards = document.querySelectorAll('.game-card');
@@ -255,21 +263,27 @@ document.addEventListener('DOMContentLoaded', () => {
         function filterAndShowGames() {
             const searchTerm = searchBar.value.toLowerCase();
             let visibleGames = [];
+
             gameCards.forEach(card => {
                 const title = card.querySelector('h3').textContent.toLowerCase();
                 const category = card.dataset.category || '';
                 const searchMatch = title.includes(searchTerm);
                 const categoryMatch = activeCategory === 'all' || category.includes(activeCategory);
+
                 card.style.display = 'none';
                 card.classList.remove('is-visible');
-                if (searchMatch && categoryMatch) visibleGames.push(card);
+                if (searchMatch && categoryMatch) {
+                    visibleGames.push(card);
+                }
             });
+
             visibleGames.forEach((card, index) => {
                 if (index < initialVisibleCount) {
                     card.style.display = 'block';
                     setTimeout(() => card.classList.add('is-visible'), 10 * index); 
                 }
             });
+
             if (noResultsMessage) noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
             if (loadMoreBtn) loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
             observeAnimatedElements(); 
@@ -309,23 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 observeAnimatedElements();
             });
         }
-
-        const cartIcon = document.getElementById('cart-icon');
-        const cartOverlay = document.getElementById('cart-overlay');
-        const closeCartBtn = document.getElementById('close-cart-btn');
-        const cartItemsContainer = document.getElementById('cart-items');
-        const cartCountEl = document.getElementById('cart-count');
-        const cartTotalEl = document.getElementById('cart-total');
+        
         const addToCartBtns = document.querySelectorAll('.add-cart-icon-btn');
-        const checkoutBtn = document.querySelector('.checkout-btn');
-        let cart = [];
-
-        if (cartIcon) cartIcon.addEventListener('click', () => { if (cartOverlay) cartOverlay.classList.add('is-active'); });
-        if (closeCartBtn) closeCartBtn.addEventListener('click', () => { if (cartOverlay) cartOverlay.classList.remove('is-active'); });
-        if (cartOverlay) cartOverlay.addEventListener('click', (e) => {
-            if (e.target === cartOverlay) cartOverlay.classList.remove('is-active');
-        });
-
         if (addToCartBtns.length > 0) {
             addToCartBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -334,57 +333,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const price = 20.00;
                     const imageSrc = card.querySelector('img').src;
                     const itemId = title;
+
+                    let cart = JSON.parse(localStorage.getItem('pixelVaultCart')) || [];
+                    
                     if (cart.find(item => item.id === itemId)) {
                         showNotification(`"${title}" já está no seu carrinho.`, 'info'); return;
                     }
                     cart.push({ id: itemId, title, price, imageSrc });
-                    updateCart();
+                    localStorage.setItem('pixelVaultCart', JSON.stringify(cart));
+                    
+                    updateCartCounter();
                     showNotification(`"${title}" foi adicionado ao carrinho!`);
                 });
-            });
-        }
-
-        function updateCart() {
-            if (!cartItemsContainer) return;
-            cartItemsContainer.innerHTML = ''; let total = 0;
-            if (cart.length === 0) { cartItemsContainer.innerHTML = '<p>Seu carrinho está vazio.</p>'; } 
-            else {
-                cart.forEach(item => {
-                    total += item.price;
-                    const cartItemEl = document.createElement('div');
-                    cartItemEl.classList.add('cart-item');
-                    cartItemEl.innerHTML = `
-                        <img src="${item.imageSrc}" alt="${item.title}" loading="lazy">
-                        <div class="cart-item-info"><h4>${item.title}</h4><p>R$ ${item.price.toFixed(2).replace('.', ',')}</p></div>
-                        <button class="remove-item-btn" data-id="${item.id}">&times;</button>`;
-                    cartItemsContainer.appendChild(cartItemEl);
-                });
-            }
-            if (cartCountEl) cartCountEl.textContent = cart.length;
-            if (cartTotalEl) cartTotalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
-            document.querySelectorAll('.remove-item-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const idToRemove = e.target.dataset.id;
-                    cart = cart.filter(item => item.id !== idToRemove);
-                    updateCart();
-                });
-            });
-        }
-        
-        if (checkoutBtn) {
-            checkoutBtn.addEventListener('click', () => {
-                const loggedInUser = localStorage.getItem('loggedInUser');
-                if (!loggedInUser) {
-                    if (typeof openLoginModal === 'function') openLoginModal(); 
-                    return; 
-                }
-                if (cart.length === 0) { showNotification('Seu carrinho está vazio!', 'error'); return; }
-                const phoneNumber = '5511914521982'; let message = 'E aí! Vim pelo site e quero levar os seguintes jogos:\n\n'; let total = 0;
-                cart.forEach(item => { message += `- ${item.title}\n`; total += item.price; });
-                message += `\nO valor total ficou R$ ${total.toFixed(2).replace('.', ',')}. Como posso realizar o pagamento?`;
-                const encodedMessage = encodeURIComponent(message);
-                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-                window.open(whatsappUrl, '_blank');
             });
         }
 
@@ -417,10 +377,103 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         filterAndShowGames();
-        updateCart(); 
+    }
+    
+    // --- BLOCO 4: LÓGICA DA PÁGINA DO CARRINHO (Selada) ---
+    const cartPageContainer = document.getElementById('cart-page-container');
+    if (cartPageContainer) {
+        const loginModalOverlay = document.getElementById('login-modal-overlay');
+
+        function openLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.add('is-active'); }
+        function closeLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.remove('is-active'); }
+
+        if (loginModalOverlay) {
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalActionBtn = document.getElementById('modal-action-btn');
+            if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
+            if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
+            loginModalOverlay.addEventListener('click', (e) => {
+                if (e.target === loginModalOverlay) closeLoginModal();
+            });
+        }
+
+        const cartItemsList = document.querySelector('.cart-items-list');
+        const cartTotalEl = document.getElementById('cart-total');
+        const checkoutBtn = document.querySelector('.checkout-btn');
+
+        function renderCartPage() {
+            let cart = JSON.parse(localStorage.getItem('pixelVaultCart')) || [];
+            if (!cartItemsList) return;
+            cartItemsList.innerHTML = ''; let total = 0;
+
+            if (cart.length === 0) {
+                cartItemsList.innerHTML = '<p style="text-align: center; font-size: 1.2rem;">Seu carrinho está vazio. <a href="index.html" style="color: var(--primary-color);">Voltar para a loja</a>.</p>';
+                if (cartTotalEl) cartTotalEl.textContent = `R$ 0,00`;
+                return;
+            }
+            
+            cart.forEach(item => {
+                total += item.price;
+                const cartItemEl = document.createElement('div');
+                cartItemEl.classList.add('cart-item');
+                cartItemEl.innerHTML = `
+                    <img src="${item.imageSrc}" alt="${item.title}" loading="lazy">
+                    <div class="cart-item-info">
+                        <h4>${item.title}</h4>
+                        <p>R$ ${item.price.toFixed(2).replace('.', ',')}</p>
+                    </div>
+                    <button class="remove-item-btn" data-id="${item.id}">&times;</button>
+                `;
+                cartItemsList.appendChild(cartItemEl);
+            });
+            
+            if (cartTotalEl) cartTotalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+
+            document.querySelectorAll('.remove-item-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    let cart = JSON.parse(localStorage.getItem('pixelVaultCart')) || [];
+                    const idToRemove = e.target.dataset.id;
+                    cart = cart.filter(item => item.id !== idToRemove);
+                    localStorage.setItem('pixelVaultCart', JSON.stringify(cart));
+                    renderCartPage();
+                    updateCartCounter();
+                });
+            });
+        }
+
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', () => {
+                const loggedInUser = localStorage.getItem('loggedInUser');
+                const cart = JSON.parse(localStorage.getItem('pixelVaultCart')) || [];
+
+                if (!loggedInUser) {
+                    openLoginModal(); 
+                    return; 
+                }
+                if (cart.length === 0) {
+                    showNotification('Seu carrinho está vazio!', 'error'); 
+                    return; 
+                }
+                const phoneNumber = '5511914521982'; 
+                let message = 'E aí! Vim pelo site e quero levar os seguintes jogos:\n\n'; 
+                let total = 0;
+                cart.forEach(item => { 
+                    message += `- ${item.title}\n`; 
+                    total += item.price; 
+                });
+                message += `\nO valor total ficou R$ ${total.toFixed(2).replace('.', ',')}. Como posso realizar o pagamento?`;
+                const encodedMessage = encodeURIComponent(message);
+                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+                window.open(whatsappUrl, '_blank');
+            });
+        }
+        
+        renderCartPage();
     }
 
     // --- CHAMADA FINAL UNIVERSAL ---
     checkLoginState();
+    updateCartCounter();
+    observeAnimatedElements();
 
 });
