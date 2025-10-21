@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const liveFeedContainer = document.getElementById('live-feed-container');
         if (liveFeedContainer) {
-            const fakeNames = ["Lucas", "Julia", "Matheus", "Beatriz", "Gabriel", "Mariana", "Pedro", "Ana", "Rafael", "Larissa"];
+            const fakeNames = ["Gabriel", "Isabella", "Caetano", "Camila", "Dante", "Alice", "Eduardo", "Elisa", "Matheus", "Vitória", "Gael", "Beatriz", "Benício", "Yara", "Guilherme", "Maitê", "Daniel", "Heitor", "Laura", "Otávio", "Jade", "João", "Estela", "Silas", "Valentina", "Leonardo", "Ana", "Rafael", "Celina", "Felipe", "Fernanda", "Lucas", "Lorena", "Nilo", "Manuela", "Pedro", "Raíssa", "Ravi", "Mariana", "Uriel", "Giovanna", "Bruno", "Íris", "Gustavo", "Clarice", "Valentin", "Julia", "Bento", "Amélia", "Vinicius", "Luiza", "Leandro", "Olívia", "Cauã", "Serena", "Thiago", "Helena", "Thales", "Larissa", "Enzo", "Maia", "Estevão", "Sophia", "Arthur", "Tainá", "Miguel", "Letícia", "Davi", "Aurora", "Gabriela"];
             const gameTitles = Array.from(gameCards).map(card => card.querySelector('h3').textContent);
 
             function createFakePurchaseNotification() {
