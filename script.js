@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA DE AUTENTICAÇÃO E UI (REAL) ---
+    // --- LÓGICA DE AUTENTICAÇÃO E UI (UNIVERSAL) ---
     const loginLink = document.getElementById('login-link');
     const userNavItems = document.querySelectorAll('.user-nav');
     const userNameLink = document.getElementById('user-name-link');
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(loginLink) loginLink.style.display = 'none';
             if(userNameLink) userNameLink.textContent = loggedInUser;
             userNavItems.forEach(item => {
-                if(item) item.style.display = 'block';
+                if(item) item.style.display = 'block'; // Usar 'block' ou 'list-item' dependendo do seu CSS
             });
         } else {
             if(loginLink) loginLink.style.display = 'block';
@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- LÓGICA DA PÁGINA DE LOGIN (CONECTADA AO BACK-END) ---
+    // --- LÓGICA DA PÁGINA DE LOGIN (SELADA) ---
     const loginFormContainer = document.getElementById('login-form-container');
 
-    if (loginFormContainer) { // Roda apenas na página login.html
+    if (loginFormContainer) {
         const registerFormContainer = document.getElementById('register-form-container');
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- FUNÇÕES DE UI (UNIVERSAIS) ---
     function showNotification(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -181,21 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    const loginModalOverlay = document.getElementById('login-modal-overlay');
-    if (loginModalOverlay) {
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-        const modalActionBtn = document.getElementById('modal-action-btn');
-
-        function openLoginModal() { loginModalOverlay.classList.add('is-active'); }
-        function closeLoginModal() { loginModalOverlay.classList.remove('is-active'); }
-
-        if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
-        if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
-        loginModalOverlay.addEventListener('click', (e) => {
-            if (e.target === loginModalOverlay) closeLoginModal();
-        });
-    }
-
+    // --- LÓGICA UNIVERSAL DO CABEÇALHO ---
     const header = document.querySelector('.site-header');
     if (header) {
         let lastScrollY = window.scrollY;
@@ -208,7 +195,18 @@ document.addEventListener('DOMContentLoaded', () => {
             lastScrollY = window.scrollY;
         });
     }
+    
+    // --- LÓGICA UNIVERSAL DO MENU MOBILE ---
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+    const nav = document.querySelector('.main-nav');
+    if (menuToggle && nav) {
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('is-active');
+            nav.classList.toggle('is-active');
+        });
+    }
 
+    // --- ANIMAÇÕES UNIVERSAIS ---
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -231,17 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => el.classList.add('is-visible'), 50 * index); 
     });
 
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
-    const nav = document.querySelector('.main-nav');
-    if (menuToggle && nav) {
-        menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('is-active');
-            nav.classList.toggle('is-active');
-        });
-    }
-
+    // --- LÓGICAS DA PÁGINA PRINCIPAL (SELADAS) ---
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
+        // --- FILTROS, CARRINHO, CHECKOUT, FEED ---
         const searchBar = document.getElementById('search-bar');
         const categoryBtns = document.querySelectorAll('.category-btn');
         const gameCards = document.querySelectorAll('.game-card');
@@ -286,11 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     categoryBtns.forEach(b => b.classList.remove('is-active'));
                     btn.classList.add('is-active');
                     activeCategory = btn.dataset.category;
-
                     if (activeCategory === 'school') {
                         showNotification('Exibindo jogos com 10 GB ou menos, ideais para a escola.', 'info');
                     }
-
                     filterAndShowGames();
                 });
             });
@@ -378,10 +367,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (checkoutBtn) {
+            const loginModalOverlay = document.getElementById('login-modal-overlay'); // Precisa ser re-declarado aqui
             checkoutBtn.addEventListener('click', () => {
                 const loggedInUser = localStorage.getItem('loggedInUser');
                 if (!loggedInUser) {
-                    if (typeof openLoginModal === 'function') openLoginModal(); 
+                    if (loginModalOverlay) loginModalOverlay.classList.add('is-active');
                     return; 
                 }
                 if (cart.length === 0) { showNotification('Seu carrinho está vazio!', 'error'); return; }
@@ -396,7 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const liveFeedContainer = document.getElementById('live-feed-container');
         if (liveFeedContainer) {
-            // LISTA DE NOMES ATUALIZADA
             const fakeNames = ["Gabriel", "Isabella", "Caetano", "Camila", "Dante", "Alice", "Eduardo", "Elisa", "Matheus", "Vitória", "Gael", "Beatriz", "Benício", "Yara", "Guilherme", "Maitê", "Daniel", "Heitor", "Laura", "Otávio", "Jade", "João", "Estela", "Silas", "Valentina", "Leonardo", "Ana", "Rafael", "Celina", "Felipe", "Fernanda", "Lucas", "Lorena", "Nilo", "Manuela", "Pedro", "Raíssa", "Ravi", "Mariana", "Uriel", "Giovanna", "Bruno", "Íris", "Gustavo", "Clarice", "Valentin", "Julia", "Bento", "Amélia", "Vinicius", "Luiza", "Leandro", "Olívia", "Cauã", "Serena", "Thiago", "Helena", "Thales", "Larissa", "Enzo", "Maia", "Estevão", "Sophia", "Arthur", "Tainá", "Miguel", "Letícia", "Davi", "Aurora", "Gabriela"];
             const gameTitles = Array.from(gameCards).map(card => card.querySelector('h3').textContent);
 
@@ -423,8 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
             startLiveFeed();
         }
         
+        // Inicializações da página principal
         filterAndShowGames();
+        updateCart(); // Chama para inicializar o contador do carrinho em 0
     }
 
+    // --- CHAMADA UNIVERSAL FINAL ---
     checkLoginState();
 });
