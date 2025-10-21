@@ -189,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
         function openLoginModal() { loginModalOverlay.classList.add('is-active'); }
         function closeLoginModal() { loginModalOverlay.classList.remove('is-active'); }
 
-        // Adiciona listeners apenas se os botões existirem
         if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
         if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
         loginModalOverlay.addEventListener('click', (e) => {
@@ -197,17 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- CABEÇALHO INTELIGENTE (SMART HEADER - COREOGRAFIA ATUALIZADA) ---
     const header = document.querySelector('.site-header');
     if (header) {
         let lastScrollY = window.scrollY;
-
         window.addEventListener('scroll', () => {
             if (window.scrollY > lastScrollY && window.scrollY > 150) {
-                // Ao rolar para baixo, esconde o cabeçalho
                 header.classList.add('site-header--hidden');
             } else {
-                // Ao rolar para cima, mostra o cabeçalho
                 header.classList.remove('site-header--hidden');
             }
             lastScrollY = window.scrollY;
@@ -291,6 +286,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     categoryBtns.forEach(b => b.classList.remove('is-active'));
                     btn.classList.add('is-active');
                     activeCategory = btn.dataset.category;
+
+                    if (activeCategory === 'school') {
+                        showNotification('Exibindo jogos com 10 GB ou menos, ideais para a escola.', 'info');
+                    }
+
                     filterAndShowGames();
                 });
             });
@@ -381,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
             checkoutBtn.addEventListener('click', () => {
                 const loggedInUser = localStorage.getItem('loggedInUser');
                 if (!loggedInUser) {
-                    // A função openLoginModal já está guardada por `if(loginModalOverlay)`
                     if (typeof openLoginModal === 'function') openLoginModal(); 
                     return; 
                 }
@@ -397,6 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const liveFeedContainer = document.getElementById('live-feed-container');
         if (liveFeedContainer) {
+            // LISTA DE NOMES ATUALIZADA
             const fakeNames = ["Gabriel", "Isabella", "Caetano", "Camila", "Dante", "Alice", "Eduardo", "Elisa", "Matheus", "Vitória", "Gael", "Beatriz", "Benício", "Yara", "Guilherme", "Maitê", "Daniel", "Heitor", "Laura", "Otávio", "Jade", "João", "Estela", "Silas", "Valentina", "Leonardo", "Ana", "Rafael", "Celina", "Felipe", "Fernanda", "Lucas", "Lorena", "Nilo", "Manuela", "Pedro", "Raíssa", "Ravi", "Mariana", "Uriel", "Giovanna", "Bruno", "Íris", "Gustavo", "Clarice", "Valentin", "Julia", "Bento", "Amélia", "Vinicius", "Luiza", "Leandro", "Olívia", "Cauã", "Serena", "Thiago", "Helena", "Thales", "Larissa", "Enzo", "Maia", "Estevão", "Sophia", "Arthur", "Tainá", "Miguel", "Letícia", "Davi", "Aurora", "Gabriela"];
             const gameTitles = Array.from(gameCards).map(card => card.querySelector('h3').textContent);
 
