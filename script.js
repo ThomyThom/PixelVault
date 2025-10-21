@@ -1,7 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA UNIVERSAL (Executada em todas as páginas) ---
-    
+    // --- BLOCO 1: LÓGICAS UNIVERSAIS (Executadas em todas as páginas) ---
+
+    // Função Universal de Notificação
+    function showNotification(message, type = 'success') {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        container.appendChild(notification);
+        setTimeout(() => notification.classList.add('show'), 10);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+               if(notification.parentNode) notification.remove();
+            });
+        }, 3000);
+    }
+
     // Lógica de Autenticação e UI do Menu
     const loginLink = document.getElementById('login-link');
     const userNavItems = document.querySelectorAll('.user-nav');
@@ -31,23 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Sessão encerrada. Até a próxima!');
             setTimeout(() => window.location.href = 'index.html', 1000);
         });
-    }
-
-    // Função Universal de Notificação
-    function showNotification(message, type = 'success') {
-        const container = document.getElementById('notification-container');
-        if (!container) return;
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        container.appendChild(notification);
-        setTimeout(() => notification.classList.add('show'), 10);
-        setTimeout(() => {
-            notification.classList.remove('show');
-            notification.addEventListener('transitionend', () => {
-               if(notification.parentNode) notification.remove();
-            });
-        }, 3000);
     }
 
     // Lógica Universal do Cabeçalho e Menu Mobile
@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const animatedElements = document.querySelectorAll('.animate-on-scroll:not(.is-visible)');
         animatedElements.forEach(el => observer.observe(el));
     }
+    
     observeAnimatedElements();
 
     const loadAnimatedElements = document.querySelectorAll('.animate-on-load');
@@ -96,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // --- LÓGICA DA PÁGINA DE LOGIN (Selada) ---
+    // --- BLOCO 2: LÓGICA DA PÁGINA DE LOGIN (Selada) ---
     const loginFormContainer = document.getElementById('login-form-container');
     if (loginFormContainer) { 
         const registerFormContainer = document.getElementById('register-form-container');
@@ -229,16 +230,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- LÓGICAS DA PÁGINA PRINCIPAL (SELADAS) ---
+    // --- BLOCO 3: LÓGICAS DA PÁGINA PRINCIPAL (Seladas) ---
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-        const modalActionBtn = document.getElementById('modal-action-btn');
-
+        
         if (loginModalOverlay) {
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalActionBtn = document.getElementById('modal-action-btn');
+
             function openLoginModal() { loginModalOverlay.classList.add('is-active'); }
             function closeLoginModal() { loginModalOverlay.classList.remove('is-active'); }
+
             if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
             if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
             loginModalOverlay.addEventListener('click', (e) => {
@@ -257,21 +260,27 @@ document.addEventListener('DOMContentLoaded', () => {
         function filterAndShowGames() {
             const searchTerm = searchBar.value.toLowerCase();
             let visibleGames = [];
+
             gameCards.forEach(card => {
                 const title = card.querySelector('h3').textContent.toLowerCase();
                 const category = card.dataset.category || '';
                 const searchMatch = title.includes(searchTerm);
                 const categoryMatch = activeCategory === 'all' || category.includes(activeCategory);
+
                 card.style.display = 'none';
                 card.classList.remove('is-visible');
-                if (searchMatch && categoryMatch) visibleGames.push(card);
+                if (searchMatch && categoryMatch) {
+                    visibleGames.push(card);
+                }
             });
+
             visibleGames.forEach((card, index) => {
                 if (index < initialVisibleCount) {
                     card.style.display = 'block';
                     setTimeout(() => card.classList.add('is-visible'), 10 * index); 
                 }
             });
+
             if (noResultsMessage) noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
             if (loadMoreBtn) loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
             observeAnimatedElements(); 
@@ -422,5 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCart(); 
     }
 
+    // --- CHAMADA UNIVERSAL FINAL ---
     checkLoginState();
+
 });
