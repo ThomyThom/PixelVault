@@ -233,9 +233,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const modalCloseBtn = document.getElementById('modal-close-btn');
         const modalActionBtn = document.getElementById('modal-action-btn');
 
+        function openLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.add('is-active'); }
+        function closeLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.remove('is-active'); }
+
         if (loginModalOverlay) {
-            function openLoginModal() { loginModalOverlay.classList.add('is-active'); }
-            function closeLoginModal() { loginModalOverlay.classList.remove('is-active'); }
             if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
             if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
             loginModalOverlay.addEventListener('click', (e) => {
@@ -419,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCart(); 
     }
 
-    // --- CHAMADA UNIVERSAL FINAL ---
+    // --- CHAMADA FINAL UNIVERSAL ---
     checkLoginState();
 
 });
