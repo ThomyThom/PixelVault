@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA DE AUTENTICAÇÃO E UI (UNIVERSAL) ---
+    // --- LÓGICA UNIVERSAL (Executada em todas as páginas) ---
+    
+    // Lógica de Autenticação e UI do Menu
     const loginLink = document.getElementById('login-link');
     const userNavItems = document.querySelectorAll('.user-nav');
     const userNameLink = document.getElementById('user-name-link');
@@ -12,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(loginLink) loginLink.style.display = 'none';
             if(userNameLink) userNameLink.textContent = loggedInUser;
             userNavItems.forEach(item => {
-                if(item) item.style.display = 'block'; // Usar 'block' ou 'list-item' dependendo do seu CSS
+                if(item) item.style.display = 'block';
             });
         } else {
             if(loginLink) loginLink.style.display = 'block';
@@ -31,10 +33,72 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- LÓGICA DA PÁGINA DE LOGIN (SELADA) ---
-    const loginFormContainer = document.getElementById('login-form-container');
+    // Função Universal de Notificação
+    function showNotification(message, type = 'success') {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        container.appendChild(notification);
+        setTimeout(() => notification.classList.add('show'), 10);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+               if(notification.parentNode) notification.remove();
+            });
+        }, 3000);
+    }
 
-    if (loginFormContainer) {
+    // Lógica Universal do Cabeçalho e Menu Mobile
+    const header = document.querySelector('.site-header');
+    if (header) {
+        let lastScrollY = window.scrollY;
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > lastScrollY && window.scrollY > 150) {
+                header.classList.add('site-header--hidden');
+            } else {
+                header.classList.remove('site-header--hidden');
+            }
+            lastScrollY = window.scrollY;
+        });
+    }
+    
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+    const nav = document.querySelector('.main-nav');
+    if (menuToggle && nav) {
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('is-active');
+            nav.classList.toggle('is-active');
+        });
+    }
+
+    // Animações Universais
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    function observeAnimatedElements() {
+        const animatedElements = document.querySelectorAll('.animate-on-scroll:not(.is-visible)');
+        animatedElements.forEach(el => observer.observe(el));
+    }
+    observeAnimatedElements();
+
+    const loadAnimatedElements = document.querySelectorAll('.animate-on-load');
+    loadAnimatedElements.forEach((el, index) => {
+        el.style.setProperty('--i', index);
+        setTimeout(() => el.classList.add('is-visible'), 50 * (index + 1)); 
+    });
+
+
+    // --- LÓGICA DA PÁGINA DE LOGIN (Selada) ---
+    const loginFormContainer = document.getElementById('login-form-container');
+    if (loginFormContainer) { 
         const registerFormContainer = document.getElementById('register-form-container');
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
@@ -165,74 +229,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- FUNÇÕES DE UI (UNIVERSAIS) ---
-    function showNotification(message, type = 'success') {
-        const container = document.getElementById('notification-container');
-        if (!container) return;
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        container.appendChild(notification);
-        setTimeout(() => notification.classList.add('show'), 10);
-        setTimeout(() => {
-            notification.classList.remove('show');
-            notification.addEventListener('transitionend', () => {
-               if(notification.parentNode) notification.remove();
-            });
-        }, 3000);
-    }
-
-    // --- LÓGICA UNIVERSAL DO CABEÇALHO ---
-    const header = document.querySelector('.site-header');
-    if (header) {
-        let lastScrollY = window.scrollY;
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > lastScrollY && window.scrollY > 150) {
-                header.classList.add('site-header--hidden');
-            } else {
-                header.classList.remove('site-header--hidden');
-            }
-            lastScrollY = window.scrollY;
-        });
-    }
-    
-    // --- LÓGICA UNIVERSAL DO MENU MOBILE ---
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
-    const nav = document.querySelector('.main-nav');
-    if (menuToggle && nav) {
-        menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('is-active');
-            nav.classList.toggle('is-active');
-        });
-    }
-
-    // --- ANIMAÇÕES UNIVERSAIS ---
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('is-visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1 });
-
-    function observeAnimatedElements() {
-        const animatedElements = document.querySelectorAll('.animate-on-scroll:not(.is-visible)');
-        animatedElements.forEach(el => observer.observe(el));
-    }
-    
-    observeAnimatedElements();
-
-    const loadAnimatedElements = document.querySelectorAll('.animate-on-load');
-    loadAnimatedElements.forEach((el, index) => {
-        el.style.setProperty('--i', index);
-        setTimeout(() => el.classList.add('is-visible'), 50 * index); 
-    });
-
     // --- LÓGICAS DA PÁGINA PRINCIPAL (SELADAS) ---
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
-        // --- FILTROS, CARRINHO, CHECKOUT, FEED ---
+        const loginModalOverlay = document.getElementById('login-modal-overlay');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalActionBtn = document.getElementById('modal-action-btn');
+
+        if (loginModalOverlay) {
+            function openLoginModal() { loginModalOverlay.classList.add('is-active'); }
+            function closeLoginModal() { loginModalOverlay.classList.remove('is-active'); }
+            if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
+            if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
+            loginModalOverlay.addEventListener('click', (e) => {
+                if (e.target === loginModalOverlay) closeLoginModal();
+            });
+        }
+
         const searchBar = document.getElementById('search-bar');
         const categoryBtns = document.querySelectorAll('.category-btn');
         const gameCards = document.querySelectorAll('.game-card');
@@ -244,27 +257,21 @@ document.addEventListener('DOMContentLoaded', () => {
         function filterAndShowGames() {
             const searchTerm = searchBar.value.toLowerCase();
             let visibleGames = [];
-
             gameCards.forEach(card => {
                 const title = card.querySelector('h3').textContent.toLowerCase();
                 const category = card.dataset.category || '';
                 const searchMatch = title.includes(searchTerm);
                 const categoryMatch = activeCategory === 'all' || category.includes(activeCategory);
-
                 card.style.display = 'none';
                 card.classList.remove('is-visible');
-                if (searchMatch && categoryMatch) {
-                    visibleGames.push(card);
-                }
+                if (searchMatch && categoryMatch) visibleGames.push(card);
             });
-
             visibleGames.forEach((card, index) => {
                 if (index < initialVisibleCount) {
                     card.style.display = 'block';
                     setTimeout(() => card.classList.add('is-visible'), 10 * index); 
                 }
             });
-
             if (noResultsMessage) noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
             if (loadMoreBtn) loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
             observeAnimatedElements(); 
@@ -367,11 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (checkoutBtn) {
-            const loginModalOverlay = document.getElementById('login-modal-overlay'); // Precisa ser re-declarado aqui
             checkoutBtn.addEventListener('click', () => {
                 const loggedInUser = localStorage.getItem('loggedInUser');
                 if (!loggedInUser) {
-                    if (loginModalOverlay) loginModalOverlay.classList.add('is-active');
+                    if (typeof openLoginModal === 'function') openLoginModal(); 
                     return; 
                 }
                 if (cart.length === 0) { showNotification('Seu carrinho está vazio!', 'error'); return; }
@@ -412,11 +418,9 @@ document.addEventListener('DOMContentLoaded', () => {
             startLiveFeed();
         }
         
-        // Inicializações da página principal
         filterAndShowGames();
-        updateCart(); // Chama para inicializar o contador do carrinho em 0
+        updateCart(); 
     }
 
-    // --- CHAMADA UNIVERSAL FINAL ---
     checkLoginState();
 });
