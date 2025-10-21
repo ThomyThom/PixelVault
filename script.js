@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- BLOCO 1: LÓGICAS E FUNÇÕES UNIVERSAIS ---
+    // --- BLOCO 1: LÓGICAS E FUNÇÕES UNIVERSAIS (Executadas em todas as páginas) ---
 
+    // Função Universal de Notificação
     function showNotification(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    // Lógica Universal de Autenticação e UI do Menu
     const loginLink = document.getElementById('login-link');
     const userNavItems = document.querySelectorAll('.user-nav');
     const userNameLink = document.getElementById('user-name-link');
@@ -44,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Lógica Universal do Cabeçalho e Menu Mobile
     const header = document.querySelector('.site-header');
     if (header) {
         let lastScrollY = window.scrollY;
@@ -66,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Animações Universais
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -415,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCart(); 
     }
 
-    // --- CHAMADA FINAL UNIVERSAL ---
+    // --- CHAMADA UNIVERSAL FINAL ---
     checkLoginState();
+
 });
