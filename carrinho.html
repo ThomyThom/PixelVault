@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seu Carrinho - Pixel Vault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="notification-container"></div>
+    <div class="stars-bg"></div>
+
+    <header class="site-header">
+        <div class="container">
+            <a href="index.html" class="logo">Pixel Vault</a>
+            <nav class="main-nav">
+                <ul id="main-menu">
+                    <li><a href="index.html#destaques">Destaques</a></li>
+                    <li><a href="index.html#categorias">Categorias</a></li>
+                    <li id="login-link"><a href="login.html">Entrar</a></li>
+                    
+                    <li class="user-nav" style="display: none;"><a href="#" id="user-name-link"></a></li>
+                    <li class="user-nav" style="display: none;"><a href="comotrabalhamos.html">Como Trabalhamos</a></li>
+                    <li class="user-nav" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <a href="carrinho.html" class="cart-icon" id="cart-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span class="cart-count" id="cart-count">0</span>
+                </a>
+            </div>
+            <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
+        </div>
+    </header>
+
+    <main class="content-page">
+        <section class="hero-short">
+            <div class="container">
+                <h1 class="animate-on-load">Seu Carrinho de Compras</h1>
+                <p class="animate-on-load">Revise seus jogos antes de finalizar a aquisição.</p>
+            </div>
+        </section>
+
+        <section class="cart-page-section" id="cart-page-container">
+            <div class="container">
+                <div class="cart-page-layout">
+                    <div class="cart-items-list">
+                        </div>
+                    <div class="cart-summary-box">
+                        <h2>Resumo do Pedido</h2>
+                        <div class="summary-details">
+                            <p>Total: <span id="cart-total">R$ 0,00</span></p>
+                        </div>
+                        <button class="cta-button checkout-btn">Finalizar Compra</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer-bottom">
+        <div class="container">
+            <p>&copy; 2025 Pixel Vault. Todos os direitos reservados.</p>
+            <div class="social-links">
+                <a href="#">Discord</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
