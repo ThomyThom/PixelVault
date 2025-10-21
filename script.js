@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- BLOCO 1: LÓGICAS UNIVERSAIS (Executadas em todas as páginas) ---
+    // --- BLOCO 1: LÓGICAS E FUNÇÕES UNIVERSAIS ---
 
-    // Função Universal de Notificação
     function showNotification(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    // Lógica de Autenticação e UI do Menu
     const loginLink = document.getElementById('login-link');
     const userNavItems = document.querySelectorAll('.user-nav');
     const userNameLink = document.getElementById('user-name-link');
@@ -30,14 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loggedInUser) {
             if(loginLink) loginLink.style.display = 'none';
             if(userNameLink) userNameLink.textContent = loggedInUser;
-            userNavItems.forEach(item => {
-                if(item) item.style.display = 'block';
-            });
+            userNavItems.forEach(item => { if(item) item.style.display = 'block'; });
         } else {
             if(loginLink) loginLink.style.display = 'block';
-            userNavItems.forEach(item => {
-                if(item) item.style.display = 'none';
-            });
+            userNavItems.forEach(item => { if(item) item.style.display = 'none'; });
         }
     }
     
@@ -50,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Lógica Universal do Cabeçalho e Menu Mobile
     const header = document.querySelector('.site-header');
     if (header) {
         let lastScrollY = window.scrollY;
@@ -73,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Animações Universais
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -87,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const animatedElements = document.querySelectorAll('.animate-on-scroll:not(.is-visible)');
         animatedElements.forEach(el => observer.observe(el));
     }
-    
     observeAnimatedElements();
 
     const loadAnimatedElements = document.querySelectorAll('.animate-on-load');
@@ -230,18 +221,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- BLOCO 3: LÓGICAS DA PÁGINA PRINCIPAL (Seladas) ---
+
+    // --- BLOCO 3: LÓGICAS DA PÁGINA PRINCIPAL (Selada) ---
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
-        
-        if (loginModalOverlay) {
-            const modalCloseBtn = document.getElementById('modal-close-btn');
-            const modalActionBtn = document.getElementById('modal-action-btn');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalActionBtn = document.getElementById('modal-action-btn');
 
+        if (loginModalOverlay) {
             function openLoginModal() { loginModalOverlay.classList.add('is-active'); }
             function closeLoginModal() { loginModalOverlay.classList.remove('is-active'); }
-
             if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
             if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
             loginModalOverlay.addEventListener('click', (e) => {
@@ -260,27 +250,21 @@ document.addEventListener('DOMContentLoaded', () => {
         function filterAndShowGames() {
             const searchTerm = searchBar.value.toLowerCase();
             let visibleGames = [];
-
             gameCards.forEach(card => {
                 const title = card.querySelector('h3').textContent.toLowerCase();
                 const category = card.dataset.category || '';
                 const searchMatch = title.includes(searchTerm);
                 const categoryMatch = activeCategory === 'all' || category.includes(activeCategory);
-
                 card.style.display = 'none';
                 card.classList.remove('is-visible');
-                if (searchMatch && categoryMatch) {
-                    visibleGames.push(card);
-                }
+                if (searchMatch && categoryMatch) visibleGames.push(card);
             });
-
             visibleGames.forEach((card, index) => {
                 if (index < initialVisibleCount) {
                     card.style.display = 'block';
                     setTimeout(() => card.classList.add('is-visible'), 10 * index); 
                 }
             });
-
             if (noResultsMessage) noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
             if (loadMoreBtn) loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
             observeAnimatedElements(); 
@@ -431,7 +415,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCart(); 
     }
 
-    // --- CHAMADA UNIVERSAL FINAL ---
+    // --- CHAMADA FINAL UNIVERSAL ---
     checkLoginState();
-
 });
