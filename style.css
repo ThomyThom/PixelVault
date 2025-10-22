@@ -1140,3 +1140,38 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ... (Todo o CSS anterior permanece o mesmo até o rodapé) ... */
+
+/* --- Rodapé --- */
+.site-footer-bottom {
+    padding: 30px 0;
+    border-top: 1px solid var(--card-border);
+    background: rgba(2, 10, 26, 0.8);
+}
+
+.site-footer-bottom .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.social-links {
+    display: flex;
+    gap: 20px;
+}
+
+/* ESTILOS ATUALIZADOS/NOVOS */
+.social-links a svg {
+    width: 28px;
+    height: 28px;
+    color: var(--text-color);
+    transition: color 0.3s, transform 0.3s;
+}
+
+.social-links a:hover svg {
+    color: var(--primary-color);
+    transform: scale(1.15) rotate(5deg);
+}
