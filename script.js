@@ -90,6 +90,30 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => el.classList.add('is-visible'), 50 * (index + 1)); 
     });
 
+    // Lógica Universal do Modal do Discord
+    const discordLink = document.getElementById('discord-link');
+    const discordModalOverlay = document.getElementById('discord-modal-overlay');
+
+    if (discordLink && discordModalOverlay) {
+        const discordCloseBtn = document.getElementById('discord-modal-close-btn');
+        const discordActionBtn = document.getElementById('discord-modal-action-btn');
+
+        function openDiscordModal(e) {
+            e.preventDefault();
+            discordModalOverlay.classList.add('is-active');
+        }
+        function closeDiscordModal() {
+            discordModalOverlay.classList.remove('is-active');
+        }
+
+        discordLink.addEventListener('click', openDiscordModal);
+        if (discordCloseBtn) discordCloseBtn.addEventListener('click', closeDiscordModal);
+        if (discordActionBtn) discordActionBtn.addEventListener('click', closeDiscordModal);
+        discordModalOverlay.addEventListener('click', (e) => {
+            if (e.target === discordModalOverlay) closeDiscordModal();
+        });
+    }
+
     // Atualiza o contador do carrinho em todas as páginas
     const cartCountEl = document.getElementById('cart-count');
     function updateCartCounter() {
@@ -233,11 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
     // --- BLOCO 3: LÓGICAS DA PÁGINA PRINCIPAL (Selada) ---
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
-
+        
         function openLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.add('is-active'); }
         function closeLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.remove('is-active'); }
 
@@ -290,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     btn.classList.add('is-active');
                     activeCategory = btn.dataset.category;
                     if (activeCategory === 'school') {
-                        showNotification('Exibindo jogos com 10 GB ou menos, ideais para a escola.', 'info');
+                        showNotification('Exibindo jogos recomendados para a escola.', 'info');
                     }
                     filterAndShowGames();
                 });

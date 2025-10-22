@@ -749,6 +749,7 @@ body {
     font-weight: 500;
 }
 
+/* --- Estilos de Modal (Unificado) --- */
 .modal-overlay {
     position: fixed;
     top: 0;
