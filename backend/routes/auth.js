@@ -5,7 +5,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-// ROTA DE REGISTRO: /api/auth/register
+// ROTA DE REGISTRO
 router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password, confirm_password, school, grade, course, phone, cpf } = req.body;
@@ -36,19 +36,27 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ message: 'Este número de telefone já está em uso.' });
         }
 
-        // Se todas as verificações passarem, cria-se a nova identidade
         const user = new User({ firstName, lastName, email, password, school, grade, course, phone, cpf });
         await user.save();
 
-        res.status(201).json({ message: 'Chave forjada com sucesso! Bem-vindo ao clube.' });
+        res.status(201).json({ 
+            message: 'Chave forjada com sucesso! Bem-vindo ao clube.',
+            user: {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                school: user.school,
+                grade: user.grade,
+                course: user.course
+            }
+        });
 
     } catch (error) {
-        console.error(error.message);
+        console.error("Erro no registro:", error);
         res.status(500).send('Erro no servidor ao tentar forjar a chave.');
     }
 });
 
-// ROTA DE LOGIN: /api/auth/login
+// ROTA DE LOGIN
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -59,25 +67,28 @@ router.post('/login', async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            // Mensagem genérica por segurança: não informa se o email existe ou não.
             return res.status(400).json({ message: 'Email ou senha incorretos.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            // Mensagem genérica por segurança.
             return res.status(400).json({ message: 'Email ou senha incorretos.' });
         }
 
+        // RESPOSTA ATUALIZADA: Envia o dossiê completo do usuário
         res.status(200).json({ 
             message: 'Acesso concedido.',
             user: {
-                firstName: user.firstName
+                firstName: user.firstName,
+                lastName: user.lastName,
+                school: user.school,
+                grade: user.grade,
+                course: user.course
             }
         });
 
     } catch (error) {
-        console.error(error.message);
+        console.error("Erro no login:", error);
         res.status(500).send('Erro no servidor ao tentar acessar o cofre.');
     }
 });
