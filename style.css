@@ -1141,8 +1141,6 @@ body {
     }
 }
 
-/* ... (Todo o CSS anterior permanece o mesmo até o rodapé) ... */
-
 /* --- Rodapé --- */
 .site-footer-bottom {
     padding: 30px 0;
@@ -1163,15 +1161,16 @@ body {
     gap: 20px;
 }
 
-/* ESTILOS ATUALIZADOS/NOVOS */
-.social-links a svg {
+/* ESTILOS ATUALIZADOS PARA O NOVO ÍCONE */
+.social-icon {
     width: 28px;
     height: 28px;
-    color: var(--text-color);
-    transition: color 0.3s, transform 0.3s;
+    /* A cor do SVG é controlada pelo próprio arquivo, mas podemos usar filtros */
+    filter: grayscale(1) brightness(1.5);
+    transition: filter 0.3s, transform 0.3s;
 }
 
-.social-links a:hover svg {
-    color: var(--primary-color);
+.social-links a:hover .social-icon {
+    filter: grayscale(0) brightness(1);
     transform: scale(1.15) rotate(5deg);
 }
