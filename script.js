@@ -26,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutLink = document.getElementById('logout-link');
 
     function checkLoginState() {
-        const loggedInUser = localStorage.getItem('loggedInUser');
-        if (loggedInUser) {
+        const userData = JSON.parse(localStorage.getItem('pixelVaultUser'));
+        if (userData && userData.firstName) {
             if(loginLink) loginLink.style.display = 'none';
-            if(userNameLink) userNameLink.textContent = loggedInUser;
+            if(userNameLink) userNameLink.textContent = userData.firstName;
             userNavItems.forEach(item => { if(item) item.style.display = 'block'; });
         } else {
             if(loginLink) loginLink.style.display = 'block';
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutLink) {
         logoutLink.addEventListener('click', (e) => {
             e.preventDefault();
-            localStorage.removeItem('loggedInUser');
+            localStorage.removeItem('pixelVaultUser');
             showNotification('Sessão encerrada. Até a próxima!');
             setTimeout(() => window.location.href = 'index.html', 1000);
         });
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erro ao tentar entrar.');
-                    localStorage.setItem('loggedInUser', data.user.firstName);
+                    localStorage.setItem('pixelVaultUser', JSON.stringify(data.user));
                     window.location.href = 'index.html';
                 } catch (error) {
                     showNotification(error.message, 'error');
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!response.ok) throw new Error(data.message || 'Erro ao registrar.');
                     
                     showNotification(data.message, 'success');
-                    localStorage.setItem('loggedInUser', data.user.firstName); 
+                    localStorage.setItem('pixelVaultUser', JSON.stringify(data.user)); 
                     setTimeout(() => window.location.href = 'index.html', 1500);
                 } catch (error) {
                     showNotification(error.message, 'error');
@@ -233,18 +233,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     // --- BLOCO 3: LÓGICAS DA PÁGINA PRINCIPAL (Selada) ---
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-        const modalActionBtn = document.getElementById('modal-action-btn');
 
         function openLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.add('is-active'); }
         function closeLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.remove('is-active'); }
 
         if (loginModalOverlay) {
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalActionBtn = document.getElementById('modal-action-btn');
             if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
             if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
             loginModalOverlay.addEventListener('click', (e) => {
@@ -327,15 +326,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const price = 20.00;
                     const imageSrc = card.querySelector('img').src;
                     const itemId = title;
-
                     let cart = JSON.parse(localStorage.getItem('pixelVaultCart')) || [];
-                    
                     if (cart.find(item => item.id === itemId)) {
                         showNotification(`"${title}" já está no seu carrinho.`, 'info'); return;
                     }
                     cart.push({ id: itemId, title, price, imageSrc });
                     localStorage.setItem('pixelVaultCart', JSON.stringify(cart));
-                    
                     updateCartCounter();
                     showNotification(`"${title}" foi adicionado ao carrinho!`);
                 });
@@ -437,10 +433,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
-                const loggedInUser = localStorage.getItem('loggedInUser');
+                const userData = JSON.parse(localStorage.getItem('pixelVaultUser'));
                 const cart = JSON.parse(localStorage.getItem('pixelVaultCart')) || [];
 
-                if (!loggedInUser) {
+                if (!userData) {
                     openLoginModal(); 
                     return; 
                 }
@@ -449,7 +445,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     return; 
                 }
                 const phoneNumber = '5511914521982'; 
-                let message = 'E aí! Vim pelo site e quero levar os seguintes jogos:\n\n'; 
+                const schoolMap = { pentagono: 'Colégio Pentágono', singular: 'Colégio Singular' };
+                const fullName = `${userData.firstName} ${userData.lastName}`;
+                const schoolName = schoolMap[userData.school] || userData.school;
+                
+                let message = `Olá, aqui é o ${fullName}, aluno do ${userData.grade}º Ano de ${userData.course} no ${schoolName}. Gostaria de levar os seguintes jogos:\n\n`;
+                
                 let total = 0;
                 cart.forEach(item => { 
                     message += `- ${item.title}\n`; 
