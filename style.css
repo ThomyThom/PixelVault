@@ -1162,15 +1162,14 @@ body {
 }
 
 /* ESTILOS ATUALIZADOS PARA O NOVO ÍCONE */
-.social-icon {
-    width: 28px;
-    height: 28px;
-    /* A cor do SVG é controlada pelo próprio arquivo, mas podemos usar filtros */
-    filter: grayscale(1) brightness(1.5);
-    transition: filter 0.3s, transform 0.3s;
+.social-icon.discord-icon {
+    width: 32px; /* Ajuste de tamanho para a proporção do ícone */
+    height: 32px;
+    fill: var(--text-color); /* Controla a cor do ícone */
+    transition: fill 0.3s, transform 0.3s;
 }
 
-.social-links a:hover .social-icon {
-    filter: grayscale(0) brightness(1);
+.social-links a:hover .discord-icon {
+    fill: var(--primary-color);
     transform: scale(1.15) rotate(5deg);
 }

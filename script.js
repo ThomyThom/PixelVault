@@ -263,27 +263,21 @@ document.addEventListener('DOMContentLoaded', () => {
         function filterAndShowGames() {
             const searchTerm = searchBar.value.toLowerCase();
             let visibleGames = [];
-
             gameCards.forEach(card => {
                 const title = card.querySelector('h3').textContent.toLowerCase();
                 const category = card.dataset.category || '';
                 const searchMatch = title.includes(searchTerm);
                 const categoryMatch = activeCategory === 'all' || category.includes(activeCategory);
-
                 card.style.display = 'none';
                 card.classList.remove('is-visible');
-                if (searchMatch && categoryMatch) {
-                    visibleGames.push(card);
-                }
+                if (searchMatch && categoryMatch) visibleGames.push(card);
             });
-
             visibleGames.forEach((card, index) => {
                 if (index < initialVisibleCount) {
                     card.style.display = 'block';
                     setTimeout(() => card.classList.add('is-visible'), 10 * index); 
                 }
             });
-
             if (noResultsMessage) noResultsMessage.style.display = visibleGames.length === 0 ? 'block' : 'none';
             if (loadMoreBtn) loadMoreBtn.style.display = visibleGames.length > initialVisibleCount ? 'inline-block' : 'none';
             observeAnimatedElements(); 
@@ -323,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 observeAnimatedElements();
             });
         }
-        
+
         const addToCartBtns = document.querySelectorAll('.add-cart-icon-btn');
         if (addToCartBtns.length > 0) {
             addToCartBtns.forEach(btn => {
@@ -383,13 +377,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartPageContainer = document.getElementById('cart-page-container');
     if (cartPageContainer) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalActionBtn = document.getElementById('modal-action-btn');
 
         function openLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.add('is-active'); }
         function closeLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.remove('is-active'); }
 
         if (loginModalOverlay) {
-            const modalCloseBtn = document.getElementById('modal-close-btn');
-            const modalActionBtn = document.getElementById('modal-action-btn');
             if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
             if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
             loginModalOverlay.addEventListener('click', (e) => {
