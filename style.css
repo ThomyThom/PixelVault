@@ -1174,3 +1174,34 @@ body {
     fill: var(--primary-color);
     transform: scale(1.15) rotate(5deg);
 }
+
+/* --- Estilos Adicionais para Formulários --- */
+.form-section {
+    border-top: 1px solid var(--card-border);
+    padding-top: 20px;
+    margin-top: 20px;
+}
+.form-section:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+}
+.form-section h3 {
+    font-family: var(--font-heading);
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    text-align: left;
+    font-size: 1.2rem;
+}
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+}
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}

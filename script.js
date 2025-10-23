@@ -132,7 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const showLoginLink = document.getElementById('show-login');
         const registerForm = document.getElementById('register-form');
         const loginForm = document.getElementById('login-form');
-
+        const schoolSelect = document.getElementById('school');
+        
         if (showRegisterLink && registerFormContainer) {
             showRegisterLink.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -145,6 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 registerFormContainer.style.display = 'none';
                 loginFormContainer.style.display = 'block';
+            });
+        }
+
+        if (schoolSelect) {
+            schoolSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'not-listed') {
+                    window.location.href = 'solicitar-escola.html';
+                }
             });
         }
 
@@ -262,13 +271,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
-        
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalActionBtn = document.getElementById('modal-action-btn');
+
         function openLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.add('is-active'); }
         function closeLoginModal() { if (loginModalOverlay) loginModalOverlay.classList.remove('is-active'); }
 
         if (loginModalOverlay) {
-            const modalCloseBtn = document.getElementById('modal-close-btn');
-            const modalActionBtn = document.getElementById('modal-action-btn');
             if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLoginModal);
             if (modalActionBtn) modalActionBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
             loginModalOverlay.addEventListener('click', (e) => {
@@ -490,6 +499,46 @@ document.addEventListener('DOMContentLoaded', () => {
         
         renderCartPage();
     }
+    
+    // --- BLOCO 5: LÓGICA DA PÁGINA DE SOLICITAÇÃO DE ESCOLA ---
+    const schoolRequestForm = document.getElementById('school-request-form');
+    if (schoolRequestForm) {
+        const hasComputersCheckbox = document.getElementById('has-computers');
+        const computerTypesGroup = document.getElementById('computer-types-group');
+        const userPhoneInput = document.getElementById('user-phone');
+
+        if (hasComputersCheckbox && computerTypesGroup) {
+            hasComputersCheckbox.addEventListener('change', () => {
+                computerTypesGroup.style.display = hasComputersCheckbox.checked ? 'block' : 'none';
+            });
+        }
+        
+        if (userPhoneInput) {
+             userPhoneInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+                value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                e.target.value = value;
+            });
+        }
+
+        schoolRequestForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // --- INTEGRAÇÃO COM EMAILJS ---
+            emailjs.init('G8yQrJsHnxmhrEoGu'); // <-- SUBSTITUA AQUI
+            
+            emailjs.sendForm('personal_gmail', 'unifiedShool_request', this) // <-- SUBSTITUA AQUI
+                .then(() => {
+                    document.getElementById('main-form-wrapper').style.display = 'none';
+                    document.getElementById('success-message-wrapper').style.display = 'block';
+                }, (error) => {
+                    showNotification('Falha ao enviar solicitação. Tente novamente.', 'error');
+                    console.log('FALHA NO ENVIO...', error);
+                });
+        });
+    }
+
 
     // --- CHAMADA FINAL UNIVERSAL ---
     checkLoginState();
