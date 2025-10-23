@@ -506,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasComputersCheckbox = document.getElementById('has-computers');
         const computerTypesGroup = document.getElementById('computer-types-group');
         const userPhoneInput = document.getElementById('user-phone');
+        const schoolCepInput = document.getElementById('school-cep'); // Novo
 
         if (hasComputersCheckbox && computerTypesGroup) {
             hasComputersCheckbox.addEventListener('change', () => {
