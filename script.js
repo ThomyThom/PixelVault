@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- BLOCO 1: LÓGICAS E FUNÇÕES UNIVERSAIS (Executadas em todas as páginas) ---
 
     // Função Universal de Notificação
+    // Exibe uma mensagem de notificação na tela por 3 segundos
     function showNotification(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Lógica Universal de Autenticação e UI do Menu
+    // Mostra ou esconde itens do menu conforme o estado de login do usuário
     const loginLink = document.getElementById('login-link');
     const userNavItems = document.querySelectorAll('.user-nav');
     const userNameLink = document.getElementById('user-name-link');
@@ -47,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Lógica Universal do Cabeçalho e Menu Mobile
+    // Esconde o cabeçalho ao rolar para baixo e mostra ao rolar para cima
     const header = document.querySelector('.site-header');
     if (header) {
         let lastScrollY = window.scrollY;
@@ -70,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Animações Universais
+    // Adiciona animação aos elementos ao entrarem na tela
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -91,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Lógica Universal do Modal do Discord
+    // Abre e fecha o modal do Discord ao clicar nos botões correspondentes
     const discordLink = document.getElementById('discord-link');
     const discordModalOverlay = document.getElementById('discord-modal-overlay');
 
@@ -124,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // LÓGICA UNIVERSAL DO BOTÃO DE COMPARTILHAMENTO
+    // Compartilha o site via WhatsApp com mensagem personalizada
     const shareButton = document.getElementById('share-button');
     if (shareButton) {
         shareButton.addEventListener('click', (e) => {
@@ -139,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- BLOCO 2: LÓGICA DA PÁGINA DE LOGIN (Selada) ---
+    // Gerencia alternância entre login e cadastro, validações e envio dos formulários
     const loginFormContainer = document.getElementById('login-form-container');
     if (loginFormContainer) { 
         const registerFormContainer = document.getElementById('register-form-container');
@@ -282,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- BLOCO 3: LÓGICAS DA PÁGINA PRINCIPAL (Selada) ---
+    // Filtra, busca e exibe jogos, além de gerenciar o carrinho e feed ao vivo
     const gameGrid = document.querySelector('.game-grid'); 
     if (gameGrid) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
@@ -305,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const noResultsMessage = document.getElementById('no-results-message');
         const loadMoreBtn = document.getElementById('load-more-btn');
         let activeCategory = 'all';
-        const initialVisibleCount = 8;
+        const initialVisibleCount = 9;
         
         function filterAndShowGames() {
             const searchTerm = searchBar.value.toLowerCase();
@@ -418,6 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // --- BLOCO 4: LÓGICA DA PÁGINA DO CARRINHO (Selada) ---
+    // Renderiza itens do carrinho, remove itens e inicia checkout via WhatsApp
     const cartPageContainer = document.getElementById('cart-page-container');
     if (cartPageContainer) {
         const loginModalOverlay = document.getElementById('login-modal-overlay');
@@ -515,6 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // --- BLOCO 5: LÓGICA DA PÁGINA DE SOLICITAÇÃO DE ESCOLA ---
+    // Gerencia formulário de solicitação de escola, incluindo formatação de campos e envio via EmailJS
     const schoolRequestForm = document.getElementById('school-request-form');
     if (schoolRequestForm) {
         const hasComputersCheckbox = document.getElementById('has-computers');
@@ -567,6 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- CHAMADA FINAL UNIVERSAL ---
+    // Executa funções universais ao carregar a página
     checkLoginState();
     updateCartCounter();
     observeAnimatedElements();

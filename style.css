@@ -692,3 +692,30 @@ bodyemail {
         bottom: 90px; /* Sobe o feed para não colidir com o botão */
     }
 }
+/* --- NOVO: Banner "Em Breve" --- */
+.coming-soon-banner {
+    text-align: center;
+    margin-top: 60px;
+    padding: 25px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    backdrop-filter: blur(5px);
+}
+
+.coming-soon-banner p {
+    font-family: var(--font-heading);
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
+    color: var(--heading-color);
+    text-shadow: 0 0 10px var(--primary-color);
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        text-shadow: 0 0 10px var(--primary-color);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+    }
+}
