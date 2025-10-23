@@ -1193,15 +1193,136 @@ body {
     text-align: left;
     font-size: 1.2rem;
 }
-.checkbox-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-}
+
 .checkbox-group label {
     display: flex;
     align-items: center;
     gap: 10px;
     cursor: pointer;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Aumenta o espaçamento */
+    align-items: flex-start;
+}
+
+/* --- NOVO: Interruptor Customizado (Toggle Switch) --- */
+.toggle-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toggle-switch-container input[type="checkbox"] {
+    height: 0;
+    width: 0;
+    visibility: hidden;
+}
+
+.toggle-switch-container label {
+    cursor: pointer;
+    text-indent: -9999px; /* Esconde o texto do label original */
+    width: 50px;
+    height: 28px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    display: block;
+    border-radius: 100px;
+    position: relative;
+    transition: background-color .3s;
+}
+
+.toggle-switch-container label:after { /* O círculo que desliza */
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border-radius: 90px;
+    transition: 0.3s;
+}
+
+.toggle-switch-container input:checked + label {
+    background: var(--primary-color);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.toggle-switch-container input:checked + label:after {
+    left: calc(100% - 2px);
+    transform: translateX(-100%);
+}
+
+.toggle-switch-container:active label:after {
+    width: 28px; /* Efeito de expansão ao clicar */
+}
+
+/* Rótulo de texto para o toggle, separado do controle visual */
+.toggle-switch-container label:before {
+    content: attr(for); /* Pega o texto do 'for' do label */
+    display: block;
+    text-indent: 0;
+    position: absolute;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    color: var(--text-color);
+}
+/* Reescrevemos o label para o texto ficar fora */
+.toggle-switch-container label {
+    margin-left: auto; /* Truque para manter a estrutura, mas o texto vem de outro lugar */
+}
+
+/* Nova abordagem para o texto */
+.toggle-switch-container {
+    position: relative;
+    padding-left: 65px; /* Espaço para o switch */
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+}
+.toggle-switch-container .switch-label-text {
+    color: var(--text-color);
+    cursor: pointer;
+}
+.toggle-switch-container input[type="checkbox"] {
+    /* ... (mesmo de antes) ... */
+}
+.toggle-switch-container .switch-control { /* O label vira o controle visual */
+    position: absolute;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+    width: 50px;
+    height: 28px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    display: block;
+    border-radius: 100px;
+    transition: background-color .3s, box-shadow .3s;
+}
+
+.toggle-switch-container .switch-control:after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border-radius: 90px;
+    transition: 0.3s;
+}
+
+.toggle-switch-container input:checked + .switch-control {
+    background: var(--primary-color);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+.toggle-switch-container input:checked + .switch-control:after {
+    left: calc(100% - 2px);
+    transform: translateX(-100%);
 }
