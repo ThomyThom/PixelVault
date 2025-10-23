@@ -451,9 +451,17 @@ body {
 }
 
 .form-title { font-family: var(--font-heading); text-align: center; color: var(--heading-color); margin-bottom: 30px; font-size: 2rem; text-shadow: 0 0 10px var(--primary-color); }
-.form-row { display: flex; gap: 20px; }
+.form-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end; /* Alinha os campos na base */
+}
 .form-row .input-group { flex: 1; }
-.input-group { margin-bottom: 20px; display: flex; flex-direction: column; }
+.input-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
 .input-group label { margin-bottom: 8px; font-size: 0.9rem; color: var(--text-color); }
 
 .input-group input,

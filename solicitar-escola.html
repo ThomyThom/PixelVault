@@ -31,16 +31,16 @@
                     <label for="school-address">Endereço (Rua/Avenida, Nº, Bairro)</label>
                     <input type="text" id="school-address" name="school_address" required>
                 </div>
+                <div class="input-group">
+                    <label for="school-cep">CEP</label>
+                    <input type="text" id="school-cep" name="school_cep" required>
+                </div>
                 <div class="form-row">
-                    <div class="input-group">
-                        <label for="school-cep">CEP</label>
-                        <input type="text" id="school-cep" name="school_cep" required>
-                    </div>
-                    <div class="input-group">
+                    <div class="input-group" style="flex-grow: 1;">
                         <label for="school-city">Cidade</label>
                         <input type="text" id="school-city" name="school_city" required>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group" style="flex-basis: 100px; flex-grow: 0;">
                         <label for="school-state">Estado</label>
                         <select id="school-state" name="school_state" required>
                             <option value="" disabled selected>UF</option>
@@ -78,21 +78,21 @@
                     <label>Tipo de Ensino</label>
                     <div class="checkbox-group">
                         <label class="toggle-switch-label">
-                            <span class="switch-label-text">Fundamental</span>
+                            <span>Fundamental</span>
                             <div>
                                 <input type="checkbox" name="education_level" value="Fundamental">
                                 <span class="switch-control"></span>
                             </div>
                         </label>
                         <label class="toggle-switch-label">
-                            <span class="switch-label-text">Médio</span>
+                            <span>Médio</span>
                             <div>
                                 <input type="checkbox" name="education_level" value="Médio">
                                 <span class="switch-control"></span>
                             </div>
                         </label>
                         <label class="toggle-switch-label">
-                            <span class="switch-label-text">Faculdade</span>
+                            <span>Faculdade</span>
                             <div>
                                 <input type="checkbox" name="education_level" value="Faculdade">
                                 <span class="switch-control"></span>
@@ -106,7 +106,7 @@
                 <h3>Sobre a Infraestrutura</h3>
                 <div class="checkbox-group">
                     <label class="toggle-switch-label">
-                        <span class="switch-label-text">Possui computadores para alunos</span>
+                        <span>Possui computadores para alunos</span>
                         <div>
                             <input type="checkbox" id="has-computers" name="has_computers">
                             <span class="switch-control"></span>
@@ -114,24 +114,24 @@
                     </label>
                 </div>
                 <div class="input-group" id="computer-types-group" style="display: none;">
-                    <label>Tipo de Computadores:</label>
+                    <label>Tipo de Computadores</label>
                     <div class="checkbox-group">
                         <label class="toggle-switch-label">
-                            <span class="switch-label-text">Chromebook</span>
+                            <span>Chromebook</span>
                             <div>
                                 <input type="checkbox" name="computer_type" value="Chromebook">
                                 <span class="switch-control"></span>
                             </div>
                         </label>
                         <label class="toggle-switch-label">
-                            <span class="switch-label-text">Notebook Positivo (Governo)</span>
+                            <span>Notebook Positivo (Governo)</span>
                             <div>
                                 <input type="checkbox" name="computer_type" value="Positivo">
                                 <span class="switch-control"></span>
                             </div>
                         </label>
                         <label class="toggle-switch-label">
-                            <span class="switch-label-text">Desktops</span>
+                            <span>Desktops</span>
                             <div>
                                 <input type="checkbox" name="computer_type" value="Desktop">
                                 <span class="switch-control"></span>

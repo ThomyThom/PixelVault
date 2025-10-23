@@ -522,6 +522,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // NOVA LÓGICA DE FORMATAÇÃO DO CEP
+        if (schoolCepInput) {
+            schoolCepInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+                value = value.replace(/^(\d{5})(\d)/, '$1-$2'); // Coloca hífen depois do 5º dígito
+                e.target.value = value.slice(0, 9); // Limita o tamanho total para 9 caracteres (XXXXX-XXX)
+            });
+        }
+
         schoolRequestForm.addEventListener('submit', function(event) {
             event.preventDefault();
             
