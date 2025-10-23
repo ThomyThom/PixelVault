@@ -646,3 +646,49 @@ bodyemail {
     color: #e0e0e0;
     font-size: 16px;
 }
+
+/* --- NOVO: Botão Flutuante de Compartilhamento --- */
+.floating-share-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+    padding: 12px 18px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+    z-index: 1000;
+    transform: translateY(0);
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.floating-share-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 255, 255, 0.6);
+}
+
+.floating-share-btn svg {
+    stroke: var(--bg-color);
+    stroke-width: 2.5;
+}
+
+@media (max-width: 768px) {
+    .floating-share-btn span {
+        display: none; /* Em telas pequenas, mostra apenas o ícone */
+    }
+    .floating-share-btn {
+        padding: 15px;
+        width: 54px;
+        height: 54px;
+        justify-content: center;
+    }
+    #live-feed-container {
+        bottom: 90px; /* Sobe o feed para não colidir com o botão */
+    }
+}

@@ -123,6 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // LÓGICA UNIVERSAL DO BOTÃO DE COMPARTILHAMENTO
+    const shareButton = document.getElementById('share-button');
+    if (shareButton) {
+        shareButton.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const siteUrl = window.location.origin; // Pega a URL base (ex: https://pixel-vault-delta.vercel.app)
+            const message = `E aí! Encontrei o Pixel Vault, uma loja de jogos de PC por R$20 pra galera da escola. Dá uma olhada: ${siteUrl}`;
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+
+            window.open(whatsappUrl, '_blank');
+        });
+    }
 
     // --- BLOCO 2: LÓGICA DA PÁGINA DE LOGIN (Selada) ---
     const loginFormContainer = document.getElementById('login-form-container');
@@ -548,6 +562,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
     }
+
+    
 
 
     // --- CHAMADA FINAL UNIVERSAL ---
