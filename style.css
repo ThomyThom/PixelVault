@@ -594,3 +594,55 @@ body {
     .timeline-item:nth-child(odd), .timeline-item:nth-child(even) { left: 0; text-align: left; }
     .timeline-icon, .timeline-item:nth-child(odd) .timeline-icon, .timeline-item:nth-child(even) .timeline-icon { left: 6px; }
 }
+
+/*--- Estilos Específicos para Emails ---*/
+bodyemail {
+    margin: 0;
+    padding: 0;
+    background-color: #020a1a;
+    font-family: Arial, sans-serif;
+    color: #e0e0e0;
+}
+.containeremail {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.headeremail {
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+.headeremail h1 {
+    color: #00ffff;
+    font-size: 28px;
+    margin: 0;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+}
+.sectionemail {
+    background-color: rgba(10, 25, 47, 0.7);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+.sectionemail h2 {
+    color: #00ffff;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+.info-pairemail {
+    margin-bottom: 15px;
+}
+.info-pairemail strong {
+    display: block;
+    color: #ffffff;
+    margin-bottom: 5px;
+}
+.info-pairemail span {
+    color: #e0e0e0;
+    font-size: 16px;
+}
