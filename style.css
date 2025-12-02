@@ -365,3 +365,42 @@ body {
     .cart-item h4 { font-size: 1rem; }
     .license-tag { font-size: 0.7rem; }
 }
+
+/* --- Rodapé (Correção do Ícone) --- */
+.site-footer-bottom {
+    padding: 30px 0;
+    border-top: 1px solid var(--card-border);
+    background: rgba(2, 10, 26, 0.8);
+}
+
+.site-footer-bottom .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.social-links {
+    display: flex;
+    gap: 20px;
+    align-items: center; /* Garante alinhamento vertical */
+}
+
+.social-icon {
+    width: 32px !important; /* Força o tamanho */
+    height: 32px !important; /* Força o tamanho */
+    fill: var(--text-color);
+    transition: fill 0.3s, transform 0.3s;
+    display: block; /* Garante que respeite largura/altura */
+}
+
+/* Regra específica para o Discord se necessário */
+.discord-icon {
+    max-width: 32px;
+}
+
+.social-links a:hover .social-icon {
+    fill: var(--primary-color);
+    transform: scale(1.15) rotate(5deg);
+}
