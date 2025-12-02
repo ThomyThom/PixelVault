@@ -15,38 +15,7 @@
     <div id="live-feed-container"></div>
     <div class="stars-bg"></div>
 
-    <header class="site-header">
-        <div class="container">
-            <a href="index.html" class="logo">Pixel Vault</a>
-            <div class="search-container">
-                <input type="search" id="search-bar" placeholder="Buscar jogos...">
-            </div>
-            <nav class="main-nav">
-                <ul id="main-menu">
-                    <li><a href="index.html#destaques">Destaques</a></li>
-                    <li><a href="index.html#categorias">Categorias</a></li>
-                    <li id="login-link"><a href="login.html">Entrar</a></li>
-                    
-                    <li class="user-nav" style="display: none;">
-                        <a href="#" id="user-name-link"></a>
-                    </li>
-                    <li class="user-nav" style="display: none;">
-                        <a href="comotrabalhamos.html">Como Trabalhamos</a>
-                    </li>
-                    <li class="user-nav" style="display: none;">
-                        <a href="#" id="logout-link">Sair</a>
-                    </li>
-                </ul>
-            </nav>
-            <div class="header-actions">
-                <a href="carrinho.html" class="cart-icon" id="cart-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                    <span class="cart-count" id="cart-count">0</span>
-                </a>
-            </div>
-            <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
-        </div>
-    </header>
+    <header class="site-header"></header>
 
     <main>
         <section class="hero">
@@ -74,72 +43,13 @@
         <section id="destaques" class="game-showcase">
             <div class="container">
                 <h2 class="section-title">Destaques da Galáxia</h2>
-                <div class="game-grid">
-                    <div class="game-card animate-on-scroll" data-category="acao rpg">
-                        <img src="src/img/cbp2077.jpg" alt="Capa do Jogo Cyberpunk 2077" loading="lazy">
-                        <div class="card-content"><h3>Cyberpunk 2077</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Cyberpunk 2077 ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="acao rpg">
-                        <img src="src/img/eldenring.jpg" alt="Capa do Jogo Elden Ring" loading="lazy">
-                        <div class="card-content"><h3>Elden Ring</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Elden Ring ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="acao aventura">
-                        <img src="src/img/gow-ragnarok.jpg" alt="Capa do Jogo God of War Ragnarök" loading="lazy">
-                        <div class="card-content"><h3>God of War Ragnarök</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar God of War Ragnarök ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="rpg">
-                        <img src="src/img/baldursgate3.jpg" alt="Capa do Jogo Baldur's Gate 3" loading="lazy">
-                        <div class="card-content"><h3>Baldur's Gate 3</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Baldur's Gate 3 ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="indie aventura school">
-                        <img src="src/img/hollowknight.jpg" alt="Capa do Jogo Hollow Knight" loading="lazy">
-                        <div class="card-content"><h3>Hollow Knight</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Hollow Knight ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="indie aventura school">
-                        <img src="src/img/hollowknightsilksong.jpg" alt="Capa do Jogo Hollow Knight Silksong" loading="lazy">
-                        <div class="card-content"><h3>Hollow Knight: Silksong</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Hollow Knight Silksong ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="rpg aventura">
-                        <img src="src/img/witcher3.jpg" alt="Capa do Jogo The Witcher 3" loading="lazy">
-                        <div class="card-content"><h3>The Witcher 3</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar The Witcher 3 ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                     <div class="game-card animate-on-scroll" data-category="acao aventura">
-                        <img src="src/img/tlou-part1.jpg" alt="Capa do Jogo The Last of Us Part I" loading="lazy">
-                        <div class="card-content"><h3>The Last of Us Part I</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar The Last of Us Part I ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="acao aventura">
-                        <img src="src/img/rdr2.jpg" alt="Capa do Jogo Red Dead Redemption 2" loading="lazy">
-                        <div class="card-content"><h3>Red Dead Redemption 2</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Red Dead Redemption 2 ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="indie rpg school">
-                        <img src="src/img/discoelysium.jpg" alt="Capa do Jogo Disco Elysium" loading="lazy">
-                        <div class="card-content"><h3>Disco Elysium</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Disco Elysium ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="acao">
-                        <img src="src/img/sekiro.jpg" alt="Capa do Jogo Sekiro: Shadows Die Twice" loading="lazy">
-                        <div class="card-content"><h3>Sekiro: Shadows Die Twice</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Sekiro: Shadows Die Twice ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                    <div class="game-card animate-on-scroll" data-category="acao aventura">
-                        <img src="src/img/spiderman-miles.jpg" alt="Capa do Jogo Marvel's Spider-Man: Miles Morales" loading="lazy">
-                        <div class="card-content"><h3>Spider-Man: Miles Morales</h3><div class="price">R$ 20,00</div></div>
-                        <button class="add-cart-icon-btn" aria-label="Adicionar Spider-Man: Miles Morales ao carrinho"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-                    </div>
-                </div>
+                
+                <div class="game-grid"></div>
+
                 <div class="load-more-container">
-                    <button id="load-more-btn" class="cta-button">Carregar Mais</button>
-                </div>
-                <p id="no-results-message" class="no-results-message" style="display: none;">Nenhum jogo encontrado.</p>
+                    </div>
+                <p id="no-results-message" class="no-results-message" style="display: none;">Nenhum jogo encontrado no cofre.</p>
+                
                 <div class="coming-soon-banner animate-on-scroll">
                     <p>Novas galáxias para conquistar. 2 jogos novos toda semana!</p>
                 </div>
@@ -165,15 +75,6 @@
         <span>Compartilhe com seus amigos</span>
     </a>
     
-    <div class="modal-overlay" id="discord-modal-overlay">
-        <div class="modal-container">
-            <button class="modal-close-btn" id="discord-modal-close-btn" aria-label="Fechar">&times;</button>
-            <h2 class="modal-title">A Forja Está Ativa...</h2>
-            <p class="modal-message">Nossos mestres artesãos estão trabalhando dia e noite para construir o ponto de encontro da nossa comunidade. O portal para o Discord será aberto em breve. Fique de olho!</p>
-            <button class="cta-button modal-action-btn" id="discord-modal-action-btn">Entendido!</button>
-        </div>
-    </div>
-
     <script src="script.js"></script>
 </body>
 </html>

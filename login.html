@@ -8,11 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    </head>
+</head>
 <body class="login-page-body">
 
     <div id="notification-container"></div>
     <div class="stars-bg"></div>
+    
     <a href="index.html" class="logo logo--standalone">Pixel Vault</a>
 
     <div class="form-wrapper" id="main-form-wrapper">
@@ -111,5 +112,17 @@
     </div>
     
     <script src="script.js"></script>
+    <script>
+        // Pequeno script inline para redirecionar caso escolha "Escola não listada"
+        // (Garante funcionamento mesmo se o main script mudar)
+        const schoolSelect = document.getElementById('school');
+        if (schoolSelect) {
+            schoolSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'not-listed') {
+                    window.location.href = 'solicitar-escola.html';
+                }
+            });
+        }
+    </script>
 </body>
 </html>

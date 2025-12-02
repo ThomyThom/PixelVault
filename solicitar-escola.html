@@ -14,6 +14,7 @@
 
     <div id="notification-container"></div>
     <div class="stars-bg"></div>
+    
     <a href="index.html" class="logo logo--standalone">Pixel Vault</a>
 
     <div class="form-wrapper" id="main-form-wrapper">
@@ -44,33 +45,12 @@
                         <label for="school-state">Estado</label>
                         <select id="school-state" name="school_state" required>
                             <option value="" disabled selected>UF</option>
-                            <option value="AC">AC</option>
-                            <option value="AL">AL</option>
-                            <option value="AP">AP</option>
-                            <option value="AM">AM</option>
-                            <option value="BA">BA</option>
-                            <option value="CE">CE</option>
-                            <option value="DF">DF</option>
-                            <option value="ES">ES</option>
-                            <option value="GO">GO</option>
-                            <option value="MA">MA</option>
-                            <option value="MT">MT</option>
-                            <option value="MS">MS</option>
+                            <option value="SP" selected>SP</option> <option value="RJ">RJ</option>
                             <option value="MG">MG</option>
-                            <option value="PA">PA</option>
-                            <option value="PB">PB</option>
-                            <option value="PR">PR</option>
-                            <option value="PE">PE</option>
-                            <option value="PI">PI</option>
-                            <option value="RJ">RJ</option>
-                            <option value="RN">RN</option>
                             <option value="RS">RS</option>
-                            <option value="RO">RO</option>
-                            <option value="RR">RR</option>
+                            <option value="PR">PR</option>
                             <option value="SC">SC</option>
-                            <option value="SP">SP</option>
-                            <option value="SE">SE</option>
-                            <option value="TO">TO</option>
+                            <option value="Outro">Outro</option>
                         </select>
                     </div>
                 </div>
@@ -164,9 +144,73 @@
     <div class="form-wrapper" id="success-message-wrapper" style="display: none; text-align: center;">
         <h1 class="form-title">Solicitação Enviada!</h1>
         <p class="modal-message">Nossa equipe recebeu sua solicitação para adicionar um novo colégio. Agradecemos imensamente por nos ajudar a expandir o universo do Pixel Vault!</p>
-        <p class="modal-message">Você receberá um retorno sobre a situação do cadastro via Email ou WhatsApp em breve. Fique de olho!</p>
+        <button class="cta-button" onclick="window.location.href='index.html'" style="margin-top: 20px;">Voltar ao Início</button>
     </div>
     
     <script src="script.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa EmailJS (SUBSTITUA PELAS SUAS CHAVES)
+            emailjs.init('G8yQrJsHnxmhrEoGu'); // Ex: 'user_xyz...'
+
+            // Lógica de mostrar/esconder tipos de computadores
+            const hasComputersCheckbox = document.getElementById('has-computers');
+            const computerTypesGroup = document.getElementById('computer-types-group');
+            if (hasComputersCheckbox && computerTypesGroup) {
+                hasComputersCheckbox.addEventListener('change', () => {
+                    computerTypesGroup.style.display = hasComputersCheckbox.checked ? 'block' : 'none';
+                });
+            }
+
+            // Máscara de CEP
+            const schoolCepInput = document.getElementById('school-cep');
+            if (schoolCepInput) {
+                schoolCepInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+                    e.target.value = value.slice(0, 9);
+                });
+            }
+
+            // Máscara de Telefone
+            const userPhoneInput = document.getElementById('user-phone');
+            if (userPhoneInput) {
+                userPhoneInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+                    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                    e.target.value = value.slice(0, 15);
+                });
+            }
+
+            // Envio do Formulário
+            const form = document.getElementById('school-request-form');
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    const btn = form.querySelector('button');
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Enviando...';
+                    btn.disabled = true;
+
+                    // Substitua 'default_service' e 'template_id' pelos seus IDs do EmailJS
+                    emailjs.sendForm('personal_gmail', 'unifiedShool_request', this)
+                        .then(() => {
+                            document.getElementById('main-form-wrapper').style.display = 'none';
+                            document.getElementById('success-message-wrapper').style.display = 'block';
+                            // Função global de notificação (do script.js)
+                            if(window.showNotification) window.showNotification('Sucesso! Recebemos seu chamado.', 'success');
+                        }, (error) => {
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                            if(window.showNotification) window.showNotification('Falha no envio. Tente novamente.', 'error');
+                            console.error('EmailJS Error:', error);
+                        });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

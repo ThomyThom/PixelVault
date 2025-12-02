@@ -9,18 +9,16 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 
-// --- 1. SEGURANÇA MÁXIMA (Lista de Convidados Atualizada) ---
+// --- 1. SEGURANÇA (CORS) ---
 const allowedOrigins = [
-    'http://localhost:3000',          // Testes locais
-    'http://127.0.0.1:5500',          // Live Server
-    'https://pixelvaultshop.vercel.app' // <--- O TEU DOMÍNIO REAL AGORA ESTÁ AQUI
+    'http://localhost:3000',
+    'http://127.0.0.1:5500',
+    'https://pixelvaultshop.vercel.app' 
 ];
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Permite requisições sem origem (como Postman ou Apps Mobile)
         if (!origin) return callback(null, true);
-        
         if (allowedOrigins.indexOf(origin) === -1) {
             const msg = 'A política de CORS deste site não permite acesso a partir da origem especificada: ' + origin;
             return callback(new Error(msg), false);
@@ -33,7 +31,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// --- 2. CONEXÃO MONGODB (Resiliente) ---
+// --- 2. CONEXÃO MONGODB ---
 let cached = global.mongoose;
 if (!cached) {
     cached = global.mongoose = { conn: null, promise: null };
@@ -70,10 +68,9 @@ async function connectToDatabase() {
     return cached.conn;
 }
 
-// --- 3. MIDDLEWARE DE CONEXÃO ---
+// Middleware de Conexão
 app.use(async (req, res, next) => {
     if (req.path === '/favicon.ico') return res.status(204).end();
-
     try {
         await connectToDatabase();
         next();
@@ -83,12 +80,15 @@ app.use(async (req, res, next) => {
     }
 });
 
-// --- 4. ROTAS ---
+// --- 3. ROTAS ---
 const authRoutes = require('./routes/auth');
+const gameRoutes = require('./routes/games'); // <--- NOVA ROTA
+
 app.use('/api/auth', authRoutes);
+app.use('/api/games', gameRoutes); // <--- REGISTRO DA ROTA
 
 app.get('/', (req, res) => {
-    res.send('API Pixel Vault Segura e Online 🔒');
+    res.send('API Pixel Vault Online 🚀');
 });
 
 module.exports = app;

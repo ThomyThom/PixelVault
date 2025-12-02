@@ -1,14 +1,13 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- CONFIGURAÇÕES GLOBAIS ---
+    // --- CONFIGURAÇÕES ---
     const CONFIG = {
-        apiBaseUrl: '/api', // O proxy do Vercel já trata o redirecionamento
+        apiBaseUrl: '/api',
         localStorageUserKey: 'pixelVaultUser',
         localStorageCartKey: 'pixelVaultCart'
     };
 
-    // --- MÓDULO 1: INJEÇÃO DE COMPONENTES (DRY - Don't Repeat Yourself) ---
-    // Elimina a necessidade de copiar/colar menu em todas as páginas.
+    // --- MÓDULO 1: COMPONENTES COMPARTILHADOS (Header/Footer) ---
     async function loadSharedComponents() {
         const headerHTML = `
             <div class="container">
@@ -36,18 +35,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
 
-        // Se o elemento header existir e estiver vazio, preenche-o.
         const headerEl = document.querySelector('.site-header');
         if (headerEl && headerEl.innerHTML.trim() === '') {
             headerEl.innerHTML = headerHTML;
-            initializeHeaderLogic(); // Re-inicializa os ouvintes de eventos do header
+            initializeHeaderLogic();
         }
     }
-    
-    // Executa a injeção antes de tudo
-    // Nota: Para isto funcionar, os teus HTMLs devem ter <header class="site-header"></header> vazio.
-    // Se não quiseres mudar o HTML agora, ignora esta função e usa o HTML estático, mas eu recomendo mudar.
-    
+
     // --- MÓDULO 2: UTILITÁRIOS ---
     function showNotification(message, type = 'success') {
         const container = document.getElementById('notification-container');
@@ -56,7 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         notification.className = `notification ${type}`;
         notification.textContent = message;
         container.appendChild(notification);
-        // Força reflow para animação
         void notification.offsetWidth; 
         notification.classList.add('show');
         setTimeout(() => {
@@ -65,7 +58,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 3000);
     }
 
-    // Debounce para a barra de pesquisa (Performance)
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -74,15 +66,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // --- MÓDULO 3: LÓGICA DO CABEÇALHO E AUTENTICAÇÃO ---
+    // --- MÓDULO 3: LÓGICA DO HEADER ---
     function initializeHeaderLogic() {
         const loginLink = document.getElementById('login-link');
         const userNavItems = document.querySelectorAll('.user-nav');
         const userNameLink = document.getElementById('user-name-link');
         const logoutLink = document.getElementById('logout-link');
         const cartCountEl = document.getElementById('cart-count');
+        const searchBar = document.getElementById('search-bar');
         
-        // Verifica Sessão
+        // Sessão
         const userData = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
         if (userData && userData.firstName) {
             if(loginLink) loginLink.style.display = 'none';
@@ -98,12 +91,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 localStorage.removeItem(CONFIG.localStorageUserKey);
-                showNotification('Sessão encerrada.', 'info');
+                showNotification('Até logo!', 'info');
                 setTimeout(() => window.location.href = 'index.html', 1000);
             });
         }
 
-        // Contador do Carrinho
+        // Carrinho
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
         if (cartCountEl) cartCountEl.textContent = cart.length;
 
@@ -117,8 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Barra de Pesquisa (com Debounce)
-        const searchBar = document.getElementById('search-bar');
+        // Pesquisa Dinâmica
         if (searchBar) {
             searchBar.addEventListener('input', debounce((e) => {
                 const term = e.target.value.toLowerCase();
@@ -129,48 +121,92 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const title = card.querySelector('h3').textContent.toLowerCase();
                     if (title.includes(term)) {
                         card.style.display = 'block';
-                        setTimeout(() => card.classList.add('is-visible'), 50);
+                        card.classList.add('is-visible');
                         found = true;
                     } else {
-                        card.classList.remove('is-visible');
                         card.style.display = 'none';
+                        card.classList.remove('is-visible');
                     }
                 });
                 
                 const noResults = document.getElementById('no-results-message');
                 if(noResults) noResults.style.display = found ? 'none' : 'block';
-            }, 300)); // Espera 300ms antes de filtrar
+            }, 300));
         }
     }
 
-    // --- MÓDULO 4: LÓGICA DE LOJA (Index) ---
-    const addToCartBtns = document.querySelectorAll('.add-cart-icon-btn');
-    if (addToCartBtns.length > 0) {
-        addToCartBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const card = btn.closest('.game-card');
-                const title = card.querySelector('h3').textContent;
-                const price = 20.00;
-                const imageSrc = card.querySelector('img').src;
+    // --- MÓDULO 4: CARREGAMENTO DE JOGOS (COM SKELETONS) ---
+    async function loadGames() {
+        const gameGrid = document.querySelector('.game-grid');
+        if (!gameGrid) return; // Não estamos na home
+
+        // 1. Mostrar Skeletons
+        gameGrid.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+            const skel = document.createElement('div');
+            skel.className = 'game-card skeleton-card';
+            skel.innerHTML = `<div class="skeleton skeleton-image"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-price"></div>`;
+            gameGrid.appendChild(skel);
+        }
+
+        try {
+            // 2. Fetch da API
+            const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
+            if(!res.ok) throw new Error('Falha ao buscar jogos');
+            
+            const games = await res.json();
+            
+            // 3. Renderizar Jogos Reais
+            gameGrid.innerHTML = ''; // Remove skeletons
+            
+            if (games.length === 0) {
+                gameGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Nenhum jogo encontrado no cofre. (Execute /api/games/seed para popular)</p>';
+                return;
+            }
+
+            games.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = 'game-card animate-on-scroll';
+                // Adiciona delay escalonado para efeito visual
+                card.style.transitionDelay = `${index * 50}ms`;
+                card.dataset.category = game.categories ? game.categories.join(' ') : '';
                 
-                let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+                card.innerHTML = `
+                    <img src="${game.image}" alt="${game.title}" loading="lazy">
+                    <div class="card-content">
+                        <h3>${game.title}</h3>
+                        <div class="price">R$ ${game.price.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                    <button class="add-cart-icon-btn" aria-label="Adicionar ${game.title}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                `;
+
+                // Evento de Adicionar ao Carrinho
+                const btn = card.querySelector('.add-cart-icon-btn');
+                btn.addEventListener('click', () => {
+                    let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+                    if (cart.find(i => i.id === game._id)) {
+                        return showNotification('Já está no carrinho!', 'info');
+                    }
+                    cart.push({ id: game._id, title: game.title, price: game.price, imageSrc: game.image });
+                    localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
+                    
+                    const count = document.getElementById('cart-count');
+                    if(count) count.textContent = cart.length;
+                    showNotification(`${game.title} adicionado!`);
+                });
+
+                gameGrid.appendChild(card);
                 
-                if (cart.find(item => item.id === title)) {
-                    showNotification('Jogo já está no carrinho!', 'info');
-                    return;
-                }
-                
-                cart.push({ id: title, title, price, imageSrc });
-                localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
-                
-                // Atualiza contador imediatamente
-                const cartCountEl = document.getElementById('cart-count');
-                if(cartCountEl) cartCountEl.textContent = cart.length;
-                
-                showNotification(`${title} adicionado!`);
+                // Força animação
+                requestAnimationFrame(() => card.classList.add('is-visible'));
             });
-        });
+
+        } catch (error) {
+            console.error(error);
+            gameGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--error-color);">Erro ao conectar com o cofre.</p>';
+        }
     }
 
     // Filtros de Categoria
@@ -184,10 +220,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const cards = document.querySelectorAll('.game-card');
                 
                 cards.forEach(card => {
-                    const cardCats = card.dataset.category;
+                    const cardCats = card.dataset.category || '';
                     if (cat === 'all' || cardCats.includes(cat)) {
                         card.style.display = 'block';
-                        setTimeout(() => card.classList.add('is-visible'), 10);
+                        requestAnimationFrame(() => card.classList.add('is-visible'));
                     } else {
                         card.classList.remove('is-visible');
                         card.style.display = 'none';
@@ -207,7 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let total = 0;
 
             if (cart.length === 0) {
-                cartItemsList.innerHTML = '<p class="empty-cart-msg">Seu carrinho está vazio.</p>';
+                cartItemsList.innerHTML = '<p class="empty-cart-msg">Carrinho vazio.</p>';
                 if(totalEl) totalEl.textContent = 'R$ 0,00';
                 return;
             }
@@ -229,14 +265,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(totalEl) totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
-            // Re-bind remove buttons
             document.querySelectorAll('.remove-item-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const id = e.target.dataset.id;
                     const newCart = cart.filter(i => i.id !== id);
                     localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(newCart));
                     renderCart();
-                    // Atualiza contador do header
                     const count = document.getElementById('cart-count');
                     if(count) count.textContent = newCart.length;
                 });
@@ -244,13 +278,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         renderCart();
 
-        // Checkout WhatsApp
+        // Checkout
         const checkoutBtn = document.querySelector('.checkout-btn');
         if(checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
                 const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
                 if (!user) {
-                    showNotification('Faça login para finalizar a compra.', 'error');
+                    showNotification('Faça login primeiro.', 'error');
                     setTimeout(() => window.location.href = 'login.html', 2000);
                     return;
                 }
@@ -259,14 +293,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const total = cart.reduce((acc, item) => acc + item.price, 0);
                 const itemsList = cart.map(i => `- ${i.title}`).join('\n');
-                const msg = `Olá! Sou ${user.firstName} ${user.lastName} (${user.school}).\nGostaria de comprar:\n${itemsList}\n\nTotal: R$ ${total.toFixed(2)}\nComo pago?`;
+                const msg = `Olá! Sou ${user.firstName} ${user.lastName} (${user.school}).\nGostaria de comprar:\n${itemsList}\n\nTotal: R$ ${total.toFixed(2)}\nComo procedo?`;
                 
                 window.open(`https://wa.me/5511914521982?text=${encodeURIComponent(msg)}`, '_blank');
             });
         }
     }
 
-    // --- MÓDULO 6: AUTH (Login/Registro) ---
+    // --- MÓDULO 6: LOGIN E REGISTRO ---
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -276,14 +310,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.textContent = 'Autenticando...';
             btn.disabled = true;
 
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
             try {
                 const res = await fetch(`${CONFIG.apiBaseUrl}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({
+                        email: document.getElementById('login-email').value,
+                        password: document.getElementById('login-password').value
+                    })
                 });
                 const data = await res.json();
                 
@@ -303,7 +337,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
-        // Toggle Login/Register
         document.getElementById('show-register').addEventListener('click', (e) => {
             e.preventDefault();
             document.getElementById('login-form-container').style.display = 'none';
@@ -315,7 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('login-form-container').style.display = 'block';
         });
 
-        // Validações visuais de senha (mantidas do original, são boas)
+        // Validação Senha
         const pwInput = document.getElementById('register-password');
         if(pwInput) {
             pwInput.addEventListener('input', (e) => {
@@ -329,76 +362,52 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            // ... (Lógica de recolha de dados similar ao original, mas simplificada) ...
-            // DICA: No "Unrestricted", eu assumo que sabes copiar a lógica de fetch do login e aplicar aqui.
-            // A estrutura é idêntica: recolher dados -> fetch('/auth/register') -> tratar resposta.
-            
-            // Mas vou deixar um alerta:
             const pw = document.getElementById('register-password').value;
             const cpw = document.getElementById('confirm-password').value;
             if (pw !== cpw) return showNotification('Senhas não conferem.', 'error');
-            
-            // O resto da implementação do fetch segue o padrão do login.
+
+            const formData = {
+                firstName: document.getElementById('register-firstName').value,
+                lastName: document.getElementById('register-lastName').value,
+                email: document.getElementById('register-email').value,
+                password: pw,
+                confirm_password: cpw,
+                school: document.getElementById('school').value,
+                grade: document.getElementById('grade').value,
+                course: document.getElementById('course').value,
+                phone: document.getElementById('phone').value,
+                cpf: document.getElementById('cpf').value
+            };
+
+            const btn = registerForm.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = 'Forjando chave...';
+
+            try {
+                const res = await fetch(`${CONFIG.apiBaseUrl}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+
+                showNotification('Conta criada! Faça login.', 'success');
+                localStorage.setItem(CONFIG.localStorageUserKey, JSON.stringify(data.user));
+                setTimeout(() => window.location.href = 'index.html', 1500);
+            } catch (err) {
+                showNotification(err.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Registrar';
+            }
         });
-    }
-
-    // --- MÓDULO 7: FEED AO VIVO (Otimizado) ---
-    // O teu feed original criava elementos infinitamente. Isso come memória.
-    // Aqui eu limito o DOM.
-    const liveFeedContainer = document.getElementById('live-feed-container');
-    if (liveFeedContainer) {
-        const names = ["Gabriel", "Ana", "Lucas", "Beatriz", "João", "Sofia"]; // Lista curta para exemplo
-        const games = ["Elden Ring", "Cyberpunk 2077", "God of War", "Hollow Knight"];
-        
-        function addFeedItem() {
-            // Se a aba não estiver visível, não anima para poupar CPU
-            if (document.hidden) return;
-
-            const name = names[Math.floor(Math.random() * names.length)];
-            const game = games[Math.floor(Math.random() * games.length)];
-            
-            const el = document.createElement('div');
-            el.className = 'feed-notification';
-            el.innerHTML = `<div class="avatar">${name[0]}</div><div class="text-content"><strong>${name}</strong><span>pegou <span class="game-title">${game}</span></span></div>`;
-            
-            liveFeedContainer.appendChild(el);
-            
-            // Força reflow
-            requestAnimationFrame(() => {
-                el.classList.add('show');
-            });
-
-            // Remove após animação
-            setTimeout(() => {
-                el.classList.remove('show');
-                el.addEventListener('transitionend', () => el.remove());
-            }, 4000);
-        }
-
-        // Loop aleatório inteligente
-        function scheduleNext() {
-            const delay = Math.random() * (10000 - 5000) + 5000;
-            setTimeout(() => {
-                addFeedItem();
-                scheduleNext();
-            }, delay);
-        }
-        scheduleNext();
     }
 
     // --- INICIALIZAÇÃO ---
-    // Executa a lógica de cabeçalho existente (caso não tenhas usado a injeção)
-    initializeHeaderLogic();
+    // 1. Injeta HTML Compartilhado
+    await loadSharedComponents();
     
-    // Animação de Entrada
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('is-visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('.animate-on-scroll, .animate-on-load').forEach(el => observer.observe(el));
+    // 2. Carrega Jogos (se estiver na home)
+    loadGames();
+
 });
