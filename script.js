@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
             </div>
         `;
-        initHeaderEvents(); // Ativa os eventos do menu
+        initHeaderEvents();
     }
 
-    // 2. FUNÇÃO DE NOTIFICAÇÃO
+    // 2. UTILITÁRIOS
     window.showNotification = function(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -45,7 +45,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => note.remove(), 3000);
     };
 
-    // 3. LÓGICA DO HEADER (Login, Menu Mobile)
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    function formatPrice(value) {
+        return `R$ ${value.toFixed(2).replace('.', ',')}`;
+    }
+
+    // 3. HEADER & AUTH
     function initHeaderEvents() {
         // Mobile Menu
         const toggle = document.querySelector('.mobile-menu-toggle');
@@ -56,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Auth State
+        // Auth
         const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
         const loginLink = document.getElementById('login-link');
         const userNavs = document.querySelectorAll('.user-nav');
@@ -81,7 +93,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Cart Count
+        // Pesquisa
+        const searchBar = document.getElementById('search-bar');
+        if (searchBar) {
+            searchBar.addEventListener('input', debounce((e) => {
+                const term = e.target.value.toLowerCase();
+                const cards = document.querySelectorAll('.game-card');
+                let found = false;
+                
+                cards.forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    if (title.includes(term)) {
+                        card.style.display = 'flex';
+                        card.classList.add('is-visible');
+                        found = true;
+                    } else {
+                        card.style.display = 'none';
+                        card.classList.remove('is-visible');
+                    }
+                });
+                
+                const noResults = document.getElementById('no-results-message');
+                if(noResults) noResults.style.display = found ? 'none' : 'block';
+            }, 300));
+        }
+
         updateCartCount();
     }
 
@@ -91,88 +127,131 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(el) el.textContent = cart.length;
     }
 
-    // 4. CARREGAR JOGOS (Apenas na Home)
+    // 4. LOJA (LÓGICA 20/30/50)
     const gameGrid = document.querySelector('.game-grid');
     if (gameGrid) {
         try {
-            gameGrid.innerHTML = '<p style="text-align:center; width:100%;">Acessando o cofre...</p>';
+            gameGrid.innerHTML = '<p style="text-align:center; width:100%;">Carregando arsenal...</p>';
             const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
             if(!res.ok) throw new Error('Erro na API');
             const games = await res.json();
             
-            gameGrid.innerHTML = ''; // Limpa loading
+            gameGrid.innerHTML = ''; 
 
             if(games.length === 0) {
-                gameGrid.innerHTML = '<p>Nenhum jogo encontrado.</p>';
+                gameGrid.innerHTML = '<p>Cofre vazio.</p>';
             } else {
-                games.forEach(game => {
-                    // Se for "Coming Soon", mostra bloqueado
-                    const isLocked = game.isComingSoon;
-                    const card = document.createElement('div');
-                    card.className = `game-card animate-on-scroll ${isLocked ? 'locked' : ''}`;
-                    card.dataset.category = game.categories ? game.categories.join(' ') : '';
-                    
-                    let btnHtml = '';
-                    if (!isLocked) {
-                        btnHtml = `<button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-price="${game.price}" data-img="${game.image}">+</button>`;
-                    }
+                const availableGames = games.filter(g => !g.isComingSoon);
+                const dropGames = games.filter(g => g.isComingSoon);
 
-                    card.innerHTML = `
-                        ${isLocked ? '<div class="lock-overlay"><span class="lock-text">EM BREVE</span></div>' : ''}
-                        <img src="${game.image}" alt="${game.title}">
-                        <div class="card-content">
-                            <h3>${game.title}</h3>
-                            <div class="price">${isLocked ? '???' : 'R$ ' + game.price.toFixed(2)}</div>
-                        </div>
-                        ${btnHtml}
-                    `;
-                    gameGrid.appendChild(card);
-                });
+                // Renderiza Jogos Normais
+                renderGames(availableGames, gameGrid);
 
-                // Adicionar ao Carrinho (Event Delegation)
-                gameGrid.addEventListener('click', (e) => {
-                    if(e.target.classList.contains('add-cart-icon-btn')) {
-                        const btn = e.target;
-                        const item = {
-                            id: btn.dataset.id,
-                            title: btn.dataset.title,
-                            price: parseFloat(btn.dataset.price),
-                            imageSrc: btn.dataset.img
-                        };
-                        
-                        let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
-                        if(!cart.find(i => i.id === item.id)) {
-                            cart.push(item);
-                            localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
-                            updateCartCount();
-                            showNotification(`${item.title} adicionado!`);
-                        } else {
-                            showNotification('Já está no carrinho', 'info');
-                        }
-                    }
-                });
+                // Renderiza Drops (Se houver)
+                if(dropGames.length > 0) {
+                    const banner = document.createElement('div');
+                    banner.className = 'glitch-banner';
+                    banner.style.gridColumn = '1 / -1';
+                    banner.innerHTML = `<h3>/// DROP RESTRITO ///</h3><p>[DADOS CRIPTOGRAFADOS]</p>`;
+                    gameGrid.appendChild(banner);
+                    renderGames(dropGames, gameGrid, true);
+                }
             }
         } catch (e) {
             console.error(e);
-            gameGrid.innerHTML = '<p>Erro ao carregar jogos. Verifique a conexão.</p>';
+            gameGrid.innerHTML = '<p>Erro de conexão. Tente recarregar.</p>';
         }
     }
 
-    // 5. BOTÃO DE COMPARTILHAR (Lógica Robusta)
-    // Usamos 'document' para garantir que pegamos o clique mesmo se o DOM mudar
+    function renderGames(list, container, isLocked = false) {
+        list.forEach(game => {
+            const card = document.createElement('div');
+            card.className = `game-card animate-on-scroll ${isLocked ? 'locked' : ''}`;
+            card.dataset.category = game.categories ? game.categories.join(' ') : '';
+            
+            // Lógica do Preço Base (Padrão 20.00 se não definido)
+            const basePrice = 20.00;
+
+            card.innerHTML = `
+                ${isLocked ? '<div class="lock-overlay"><span class="lock-text">EM BREVE</span></div>' : ''}
+                <img src="${game.image}" alt="${game.title}">
+                <div class="card-content">
+                    <h3>${game.title}</h3>
+                    
+                    ${!isLocked ? `
+                    <select class="license-select">
+                        <option value="pessoal" data-price="20">PC Pessoal (R$ 20)</option>
+                        <option value="escola" data-price="30">PC Escola (R$ 30)</option>
+                        <option value="ambos" data-price="50">Ambos (R$ 50)</option>
+                    </select>
+                    ` : ''}
+
+                    <div class="price" id="price-${game._id}">R$ 20,00</div>
+                </div>
+                
+                ${!isLocked ? `
+                <button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-img="${game.image}">
+                    ADICIONAR <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                </button>
+                ` : ''}
+            `;
+            container.appendChild(card);
+
+            // Evento: Mudar Preço ao trocar opção
+            if (!isLocked) {
+                const select = card.querySelector('.license-select');
+                const priceEl = card.querySelector(`#price-${game._id}`);
+                
+                select.addEventListener('change', (e) => {
+                    const newPrice = parseFloat(e.target.options[e.target.selectedIndex].dataset.price);
+                    priceEl.textContent = formatPrice(newPrice);
+                    // Piscar para indicar mudança
+                    priceEl.style.color = '#fff';
+                    setTimeout(() => priceEl.style.color = 'var(--primary-color)', 200);
+                });
+            }
+        });
+
+        // Evento Global: Adicionar ao Carrinho (Captura o valor do select no momento do clique)
+        container.addEventListener('click', (e) => {
+            const btn = e.target.closest('.add-cart-icon-btn');
+            if (btn) {
+                const card = btn.closest('.game-card');
+                const select = card.querySelector('.license-select');
+                const selectedOption = select.options[select.selectedIndex];
+                
+                const item = {
+                    id: btn.dataset.id, // ID único do jogo
+                    cartId: Date.now(), // ID único para o carrinho (permite ter o mesmo jogo com licenças diferentes)
+                    title: btn.dataset.title,
+                    imageSrc: btn.dataset.img,
+                    licenseType: selectedOption.value, // 'pessoal', 'escola', 'ambos'
+                    licenseLabel: selectedOption.text.split(' (')[0], // Texto bonito para exibir
+                    price: parseFloat(selectedOption.dataset.price)
+                };
+
+                let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+                cart.push(item);
+                localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
+                
+                updateCartCount();
+                showNotification(`"${item.title}" (${item.licenseLabel}) adicionado!`);
+            }
+        });
+    }
+
+    // 5. BOTÃO COMPARTILHAR
     document.addEventListener('click', (e) => {
-        // Verifica se clicou no botão ou no ícone dentro dele
         const shareBtn = e.target.closest('#share-button'); 
-        
         if (shareBtn) {
             e.preventDefault();
-            const text = "Olha essa loja de jogos para a escola: " + window.location.origin;
+            const text = "Loja de jogos para PC da escola: " + window.location.origin;
             const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         }
     });
 
-    // 6. CARRINHO (Página Carrinho)
+    // 6. CARRINHO (Página)
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
@@ -182,40 +261,72 @@ document.addEventListener('DOMContentLoaded', async () => {
             cartList.innerHTML = '<p>Seu carrinho está vazio.</p>';
         } else {
             let total = 0;
+            cartList.innerHTML = '';
             cart.forEach(item => {
                 total += item.price;
                 cartList.innerHTML += `
-                    <div class="cart-item" style="display:flex; gap:15px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px;">
-                        <img src="${item.imageSrc}" style="width:60px; height:60px; object-fit:cover;">
-                        <div>
+                    <div class="cart-item">
+                        <img src="${item.imageSrc}" alt="${item.title}">
+                        <div class="cart-item-info">
                             <h4>${item.title}</h4>
-                            <p>R$ ${item.price.toFixed(2)}</p>
+                            <p style="font-size: 0.9rem; color: #aaa;">Licença: <strong style="color:var(--primary-color)">${item.licenseLabel}</strong></p>
+                            <p>${formatPrice(item.price)}</p>
                         </div>
-                        <button class="remove-btn" onclick="removeItem('${item.id}')" style="color:red; background:none; border:none; margin-left:auto; cursor:pointer;">X</button>
+                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})">Remover</button>
                     </div>
                 `;
             });
-            if(totalEl) totalEl.textContent = `R$ ${total.toFixed(2)}`;
+            if(totalEl) totalEl.textContent = formatPrice(total);
         }
 
-        // Função global para remover (necessária para o onclick inline acima)
-        window.removeItem = function(id) {
-            const newCart = cart.filter(i => i.id !== id);
+        window.removeItem = function(cartId) {
+            const newCart = cart.filter(i => i.cartId !== cartId);
             localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(newCart));
             window.location.reload();
         };
 
-        // Checkout
+        // Checkout WhatsApp Formatado
         const checkoutBtn = document.querySelector('.checkout-btn');
         if(checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
                 const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
                 if(!user) return window.location.href = 'login.html';
                 
-                let msg = `Olá, sou ${user.firstName}. Quero comprar: \n`;
-                cart.forEach(i => msg += `- ${i.title}\n`);
+                let msg = `Olá! Sou ${user.firstName} ${user.lastName} (${user.school}).\nGostaria de comprar:\n\n`;
+                let total = 0;
+                
+                cart.forEach(i => {
+                    msg += `🎮 ${i.title}\n   └ [${i.licenseLabel}] - ${formatPrice(i.price)}\n`;
+                    total += i.price;
+                });
+                
+                msg += `\n💰 *Total: ${formatPrice(total)}*\n\nComo posso realizar o pagamento?`;
                 window.open(`https://wa.me/5511914521982?text=${encodeURIComponent(msg)}`, '_blank');
             });
         }
+    }
+
+    // Filtros de Categoria
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    if(categoryBtns.length > 0) {
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector('.category-btn.is-active').classList.remove('is-active');
+                btn.classList.add('is-active');
+                const cat = btn.dataset.category;
+                const cards = document.querySelectorAll('.game-card');
+                
+                cards.forEach(card => {
+                    const cardCats = card.dataset.category || '';
+                    if (cat === 'all' || cardCats.includes(cat)) {
+                        card.style.display = 'flex';
+                        card.classList.add('is-visible');
+                    } else {
+                        card.style.display = 'none';
+                        card.classList.remove('is-visible');
+                    }
+                });
+            });
+        });
     }
 });
