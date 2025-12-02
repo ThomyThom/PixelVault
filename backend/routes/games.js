@@ -2,19 +2,34 @@
 const express = require('express');
 const router = express.Router();
 const Game = require('../models/Game');
-const checkAdmin = require('../middleware/checkAdmin'); // O porteiro de segurança
+const checkAdmin = require('../middleware/checkAdmin');
 
-// ROTA PÚBLICA: Listar todos os jogos
+// ROTA PÚBLICA: Listar jogos (Com verificação de tempo)
 router.get('/', async (req, res) => {
     try {
         const games = await Game.find().sort({ createdAt: -1 });
-        res.json(games);
+        
+        // LÓGICA TEMPORAL:
+        // Transforma os dados para o Front-end
+        const processedGames = games.map(game => {
+            const gameObj = game.toObject();
+            
+            // Verifica se existe data de bloqueio e se ela está no futuro
+            if (gameObj.unlocksAt && new Date() < new Date(gameObj.unlocksAt)) {
+                gameObj.isComingSoon = true; // Força o modo "Drop Secreto"
+            } else {
+                gameObj.isComingSoon = false; // Libera o jogo
+            }
+            return gameObj;
+        });
+
+        res.json(processedGames);
     } catch (err) {
         res.status(500).json({ message: 'Erro ao buscar jogos: ' + err.message });
     }
 });
 
-// ROTA PROTEGIDA: Adicionar um novo jogo
+// ROTA PROTEGIDA: Adicionar Jogo
 router.post('/', checkAdmin, async (req, res) => {
     const game = new Game(req.body);
     try {
@@ -25,18 +40,17 @@ router.post('/', checkAdmin, async (req, res) => {
     }
 });
 
-// ROTA PROTEGIDA: Remover um jogo
+// ROTA PROTEGIDA: Remover Jogo
 router.delete('/:id', checkAdmin, async (req, res) => {
     try {
         await Game.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Jogo removido da existência.' });
+        res.json({ message: 'Jogo removido.' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-// ROTA PROTEGIDA: SEED COMPLETO (Reset e População)
-// ATENÇÃO: Isto apaga tudo e recria os jogos iniciais. Use com cuidado.
+// ROTA PROTEGIDA: Seed (Reset)
 router.post('/seed', checkAdmin, async (req, res) => {
     const initialGames = [
         { 
@@ -118,11 +132,11 @@ router.post('/seed', checkAdmin, async (req, res) => {
     ];
 
     try {
-        await Game.deleteMany({}); // Limpa o banco atual
-        await Game.insertMany(initialGames); // Insere os novos
-        res.json({ message: "O Universo foi reiniciado com sucesso! Todos os jogos padrão foram restaurados." });
+        await Game.deleteMany({});
+        await Game.insertMany(initialGames);
+        res.json({ message: "Universo resetado." });
     } catch (err) {
-        res.status(500).json({ message: "Falha na criação do universo: " + err.message });
+        res.status(500).json({ message: err.message });
     }
 });
 

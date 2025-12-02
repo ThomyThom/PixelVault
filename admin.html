@@ -8,29 +8,17 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .admin-grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; margin-top: 40px; }
-        
-        /* CORREÇÃO CRÍTICA: Força o preview a aparecer, ignorando o display:none do style.css */
-        .preview-card { 
-            display: flex !important; 
-            opacity: 1 !important; 
-            position: sticky; top: 100px;
-            pointer-events: none; /* Desativa cliques no preview */
-        }
-
-        .mini-item { 
-            background: rgba(0,0,0,0.3); padding: 10px; margin-bottom: 10px; border-radius: 5px; 
-            display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--card-border);
-        }
+        .preview-card { display: flex !important; opacity: 1 !important; position: sticky; top: 100px; pointer-events: none; }
+        .mini-item { background: rgba(0,0,0,0.3); padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--card-border); }
         .mini-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 15px; }
         .mini-info { flex-grow: 1; }
         .btn-delete { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         
-        .checkbox-wrapper {
-            display: flex; align-items: center; gap: 10px; margin: 15px 0;
-            padding: 10px; background: rgba(0, 255, 255, 0.05); border-radius: 5px; border: 1px solid var(--card-border);
-        }
-        .checkbox-wrapper input { width: 20px; height: 20px; cursor: pointer; }
-        .checkbox-wrapper label { margin: 0; cursor: pointer; color: var(--primary-color); font-weight: bold; }
+        /* Estilo para o Input de Data */
+        .date-wrapper { margin: 15px 0; padding: 15px; background: rgba(0, 255, 255, 0.05); border-radius: 5px; border: 1px solid var(--card-border); }
+        .date-wrapper label { color: var(--primary-color); font-weight: bold; display: block; margin-bottom: 8px; }
+        .date-wrapper input { width: 100%; padding: 10px; background: #020a1a; border: 1px solid var(--card-border); color: white; border-radius: 4px; font-family: 'Inter', sans-serif; }
+        .date-wrapper small { display: block; margin-top: 5px; color: #aaa; font-size: 0.8rem; }
 
         @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
@@ -43,14 +31,11 @@
     <header class="site-header">
         <div class="container">
             <a href="index.html" class="logo">Pixel Vault <span style="font-size: 0.5em; color: var(--primary-color);">ADMIN</span></a>
-            <nav class="main-nav">
-                <ul><li><a href="index.html">Voltar para Loja</a></li></ul>
-            </nav>
+            <nav class="main-nav"><ul><li><a href="index.html">Voltar para Loja</a></li></ul></nav>
         </div>
     </header>
 
     <div class="container" style="padding-top: 100px; width: 100%;">
-        
         <div class="form-wrapper" id="key-wrapper" style="max-width: 100%; margin-bottom: 20px; padding: 20px;">
             <div class="input-group" style="margin-bottom: 0; flex-direction: row; gap: 10px; align-items: center;">
                 <label style="margin: 0; white-space: nowrap;">Chave Mestre (Secret):</label>
@@ -74,17 +59,16 @@
                     <div class="input-group">
                         <label>Preço Base (R$)</label>
                         <input type="number" id="game-price" value="20.00" step="0.01" readonly style="opacity: 0.7; cursor: not-allowed;">
-                        <small style="color:#aaa;">O sistema calcula 20/30/50 automaticamente.</small>
                     </div>
                     <div class="input-group">
-                        <label>Categorias (Separadas por espaço)</label>
+                        <label>Categorias</label>
                         <input type="text" id="game-categories" placeholder="acao rpg school" required>
-                        <small style="color: #aaa; margin-top: 5px; display: block;">Opções: acao, rpg, aventura, indie, school</small>
                     </div>
 
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="game-coming-soon">
-                        <label for="game-coming-soon">É um Drop Secreto? (Bloqueado)</label>
+                    <div class="date-wrapper">
+                        <label for="game-unlock-date">⏱️ Agendar Liberação (Opcional)</label>
+                        <input type="datetime-local" id="game-unlock-date">
+                        <small>Se definir uma data futura, o jogo ficará BLOQUEADO (Drop Secreto) até esse momento. Se deixar vazio, libera agora.</small>
                     </div>
 
                     <button type="submit" class="cta-button form-button">Lançar no Universo</button>
@@ -92,40 +76,26 @@
             </div>
 
             <div>
-                <h3 style="color: var(--primary-color); margin-bottom: 15px;">Preview (Como será visto)</h3>
-                
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">Preview</h3>
                 <div class="game-card preview-card" id="preview-card">
                     <div class="lock-overlay" id="preview-lock" style="display: none;">
                         <span class="lock-text">EM BREVE</span>
                     </div>
-
                     <img src="https://via.placeholder.com/280x350?text=Capa" alt="Preview" id="preview-img">
-                    
                     <div class="card-content">
                         <h3 id="preview-title">Título do Jogo</h3>
-                        
                         <div id="preview-controls">
-                            <select class="license-select">
-                                <option>PC Pessoal (R$ 20)</option>
-                                <option>PC Escola (R$ 30)</option>
-                                <option>Ambos (R$ 50)</option>
-                            </select>
+                            <select class="license-select"><option>PC Pessoal (R$ 20)</option><option>PC Escola (R$ 30)</option><option>Ambos (R$ 50)</option></select>
                             <a style="font-size: 0.8rem; color: #aaa; text-decoration: underline;">Por que esses valores?</a>
                         </div>
-
                         <div class="price" id="preview-price">R$ 20,00</div>
                     </div>
-                    
-                    <button class="add-cart-icon-btn" id="preview-btn">
-                        ADICIONAR <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                    </button>
+                    <button class="add-cart-icon-btn" id="preview-btn">ADICIONAR +</button>
                 </div>
 
                 <div class="game-list-mini">
                     <h3 style="color: var(--heading-color); margin-bottom: 15px; border-top: 1px solid var(--card-border); padding-top: 20px;">Jogos Ativos</h3>
-                    <div id="active-games-list">
-                        <p>Carregando lista...</p>
-                    </div>
+                    <div id="active-games-list"><p>Carregando lista...</p></div>
                 </div>
             </div>
         </div>
@@ -135,7 +105,6 @@
         const API_URL = '/api/games';
         const keyInput = document.getElementById('admin-key');
 
-        // 1. Chave
         const savedKey = localStorage.getItem('pixelVaultAdminKey');
         if(savedKey) keyInput.value = savedKey;
 
@@ -145,13 +114,12 @@
             loadGames();
         });
 
-        // 2. Preview Dinâmico
+        // Lógica de Preview
         const inputs = {
             title: document.getElementById('game-title'),
             img: document.getElementById('game-image'),
-            isSecret: document.getElementById('game-coming-soon')
+            unlockDate: document.getElementById('game-unlock-date')
         };
-        
         const preview = {
             card: document.getElementById('preview-card'),
             title: document.getElementById('preview-title'),
@@ -166,7 +134,12 @@
             preview.title.textContent = inputs.title.value || 'Título do Jogo';
             preview.img.src = inputs.img.value || 'https://via.placeholder.com/280x350?text=Capa';
             
-            if (inputs.isSecret.checked) {
+            // Verifica se a data escolhida é no futuro
+            const selectedDate = new Date(inputs.unlockDate.value);
+            const now = new Date();
+            const isFuture = inputs.unlockDate.value && selectedDate > now;
+
+            if (isFuture) {
                 preview.card.classList.add('locked');
                 preview.lock.style.display = 'flex';
                 preview.price.textContent = '???';
@@ -181,12 +154,10 @@
             }
         }
 
-        // Listeners para atualizar preview
         inputs.title.addEventListener('input', updatePreview);
         inputs.img.addEventListener('input', updatePreview);
-        inputs.isSecret.addEventListener('change', updatePreview);
+        inputs.unlockDate.addEventListener('change', updatePreview);
 
-        // 3. Adicionar Jogo
         document.getElementById('add-game-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const secret = keyInput.value;
@@ -195,44 +166,44 @@
             const data = {
                 title: inputs.title.value,
                 image: inputs.img.value,
-                price: 20.00, // Valor fixo base
+                price: 20.00,
                 categories: document.getElementById('game-categories').value.split(' ').filter(c => c.trim() !== ''),
-                isComingSoon: inputs.isSecret.checked
+                // Envia a data selecionada ou null
+                unlocksAt: inputs.unlockDate.value ? new Date(inputs.unlockDate.value) : null
             };
 
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-admin-secret': secret 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
                     body: JSON.stringify(data)
                 });
 
                 if(!res.ok) throw new Error((await res.json()).message);
                 
-                alert('Jogo Adicionado!');
+                alert('Lançamento Agendado!');
                 document.getElementById('add-game-form').reset();
-                updatePreview(); // Reseta preview
+                updatePreview();
                 loadGames();
             } catch (err) {
                 alert('Erro: ' + err.message);
             }
         });
 
-        // 4. Listar
         async function loadGames() {
             const listContainer = document.getElementById('active-games-list');
             try {
                 const res = await fetch(API_URL);
                 const games = await res.json();
-                
                 listContainer.innerHTML = '';
                 games.forEach(game => {
                     const el = document.createElement('div');
                     el.className = 'mini-item';
-                    const lockIcon = game.isComingSoon ? '🔒 ' : '';
+                    
+                    // Verifica status pelo backend
+                    const isLocked = game.isComingSoon;
+                    const lockIcon = isLocked ? '🔒 ' : '✅ ';
+                    
                     el.innerHTML = `
                         <div style="display:flex; align-items:center;">
                             <img src="${game.image}">
@@ -246,24 +217,18 @@
                     listContainer.appendChild(el);
                 });
             } catch (err) {
-                listContainer.innerHTML = '<p style="color:red">Erro ao carregar lista.</p>';
+                listContainer.innerHTML = '<p style="color:red">Erro.</p>';
             }
         }
 
         window.deleteGame = async (id) => {
-            if(!confirm('Deletar jogo?')) return;
+            if(!confirm('Deletar?')) return;
             const secret = keyInput.value;
-            
             try {
-                const res = await fetch(`${API_URL}/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'x-admin-secret': secret }
-                });
+                const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE', headers: { 'x-admin-secret': secret } });
                 if(!res.ok) throw new Error((await res.json()).message);
                 loadGames();
-            } catch (err) {
-                alert('Erro: ' + err.message);
-            }
+            } catch (err) { alert('Erro: ' + err.message); }
         };
 
         loadGames();

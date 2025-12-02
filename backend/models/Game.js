@@ -7,8 +7,8 @@ const GameSchema = new mongoose.Schema({
     image: { type: String, required: true },
     categories: [{ type: String }],
     isFeatured: { type: Boolean, default: false },
-    // NOVO CAMPO: Define se é um Drop Futuro
-    isComingSoon: { type: Boolean, default: false } 
+    // NOVO CAMPO: Data de liberação automática
+    unlocksAt: { type: Date, default: null } 
 }, { timestamps: true });
 
 module.exports = mongoose.model('Game', GameSchema);
