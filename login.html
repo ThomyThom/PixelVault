@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acesso ao Pixel Vault</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -16,79 +14,77 @@
     
     <a href="index.html" class="logo logo--standalone">Pixel Vault</a>
 
-    <div class="form-wrapper" id="main-form-wrapper">
+    <div class="form-wrapper">
         <div id="login-form-container">
             <h1 class="form-title">Acessar o Cofre</h1>
             <form id="login-form">
                 <div class="input-group">
                     <label for="login-email">Email</label>
-                    <input type="email" id="login-email" name="email" required>
+                    <input type="email" id="login-email" required>
                 </div>
                 <div class="input-group">
                     <label for="login-password">Senha</label>
-                    <input type="password" id="login-password" name="password" required>
+                    <input type="password" id="login-password" required>
                 </div>
                 <button type="submit" class="cta-button form-button">Entrar</button>
             </form>
-            <p class="form-toggle-text">Não tem uma chave? <a href="#" id="show-register">Registre-se aqui.</a></p>
+            <p class="form-toggle-text">Sem chave? <a href="#" id="show-register">Registre-se aqui.</a></p>
         </div>
 
         <div id="register-form-container" style="display: none;">
-            <h1 class="form-title">Forjar uma Nova Chave</h1>
+            <h1 class="form-title">Nova Chave</h1>
             <form id="register-form">
                 <div class="form-row">
                     <div class="input-group">
-                        <label for="register-firstName">Nome</label>
-                        <input type="text" id="register-firstName" name="firstName" required>
+                        <label>Nome</label>
+                        <input type="text" id="register-firstName" required>
                     </div>
                     <div class="input-group">
-                        <label for="register-lastName">Sobrenome</label>
-                        <input type="text" id="register-lastName" name="lastName" required>
+                        <label>Sobrenome</label>
+                        <input type="text" id="register-lastName" required>
                     </div>
                 </div>
-                 <div class="input-group">
-                    <label for="register-email">Email</label>
-                    <input type="email" id="register-email" name="email" required>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="register-email" required>
                 </div>
                 <div class="input-group">
-                    <label for="register-password">Senha</label>
-                    <input type="password" id="register-password" name="password" required>
+                    <label>Senha</label>
+                    <input type="password" id="register-password" required>
                 </div>
                 <ul class="password-reqs">
-                    <li id="req-length">Pelo menos 8 caracteres</li>
-                    <li id="req-lowercase">Uma letra minúscula</li>
-                    <li id="req-uppercase">Uma letra maiúscula</li>
-                    <li id="req-number">Pelo menos um número</li>
+                    <li id="req-length">Mínimo 8 caracteres</li>
+                    <li id="req-lowercase">Letra minúscula</li>
+                    <li id="req-uppercase">Letra maiúscula</li>
+                    <li id="req-number">Número</li>
                 </ul>
                 <div class="input-group">
-                    <label for="confirm-password">Confirme a Senha</label>
-                    <input type="password" id="confirm-password" name="confirm_password" required>
+                    <label>Confirmar Senha</label>
+                    <input type="password" id="confirm-password" required>
                 </div>
                 <div class="input-group">
-                    <label for="school">Colégio</label>
-                    <select id="school" name="school" required>
-                        <option value="" disabled selected>Selecione sua base...</option>
+                    <label>Colégio</label>
+                    <select id="school" required>
+                        <option value="" disabled selected>Selecione...</option>
                         <option value="pentagono">Colégio Pentágono</option>
                         <option value="singular">Colégio Singular</option>
-                        <option value="not-listed">Meu colégio não está listado</option>
+                        <option value="not-listed">Outro (Solicitar)</option>
                     </select>
                 </div>
                 <div class="form-row">
                     <div class="input-group">
-                        <label for="grade">Série</label>
-                        <select id="grade" name="grade" required>
-                            <option value="" disabled selected>Seu ano...</option>
+                        <label>Série</label>
+                        <select id="grade" required>
                             <option value="1">1º Ano</option>
                             <option value="2">2º Ano</option>
                             <option value="3">3º Ano</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="course">Curso</label>
-                        <select id="course" name="course" required>
-                            <option value="" disabled selected>Sua especialidade...</option>
-                            <option value="academico">Acadêmico</option>
+                        <label>Curso</label>
+                        <select id="course" required>
                             <option value="informatica">Informática</option>
+                            <option value="academico">Acadêmico</option>
                             <option value="mecatronica">Mecatrônica</option>
                             <option value="midias">Mídias</option>
                             <option value="publicidade">Publicidade</option>
@@ -97,32 +93,26 @@
                         </select>
                     </div>
                 </div>
-                 <div class="input-group">
-                    <label for="phone">Número de Telefone</label>
-                    <input type="tel" id="phone" name="phone" placeholder="(11) 99999-9999" maxlength="15" required>
+                <div class="input-group">
+                    <label>Telefone</label>
+                    <input type="tel" id="phone" placeholder="(11) 99999-9999" required>
                 </div>
-                 <div class="input-group">
-                    <label for="cpf">CPF</label>
-                    <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" required>
+                <div class="input-group">
+                    <label>CPF</label>
+                    <input type="text" id="cpf" placeholder="000.000.000-00" required>
                 </div>
                 <button type="submit" class="cta-button form-button">Registrar</button>
             </form>
-            <p class="form-toggle-text">Já tem uma chave? <a href="#" id="show-login">Voltar para o login.</a></p>
+            <p class="form-toggle-text">Já tem conta? <a href="#" id="show-login">Fazer Login.</a></p>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
     <script>
-        // Pequeno script inline para redirecionar caso escolha "Escola não listada"
-        // (Garante funcionamento mesmo se o main script mudar)
-        const schoolSelect = document.getElementById('school');
-        if (schoolSelect) {
-            schoolSelect.addEventListener('change', (e) => {
-                if (e.target.value === 'not-listed') {
-                    window.location.href = 'solicitar-escola.html';
-                }
-            });
-        }
+        // Redirecionamento rápido para escola não listada
+        document.getElementById('school').addEventListener('change', function() {
+            if (this.value === 'not-listed') window.location.href = 'solicitar-escola.html';
+        });
     </script>
 </body>
 </html>

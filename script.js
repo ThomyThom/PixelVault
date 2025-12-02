@@ -1,40 +1,13 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
+    // --- CONFIGURAÇÕES GLOBAIS ---
     const CONFIG = {
         apiBaseUrl: '/api',
         localStorageUserKey: 'pixelVaultUser',
         localStorageCartKey: 'pixelVaultCart'
     };
 
-    // 1. INJETAR HEADER
-    const headerEl = document.querySelector('.site-header');
-    if (headerEl && headerEl.innerHTML.trim() === '') {
-        headerEl.innerHTML = `
-            <div class="container">
-                <a href="index.html" class="logo">Pixel Vault</a>
-                <div class="search-container">
-                    <input type="search" id="search-bar" placeholder="Buscar jogos...">
-                </div>
-                <nav class="main-nav">
-                    <ul id="main-menu">
-                        <li><a href="index.html#destaques">Destaques</a></li>
-                        <li><a href="index.html#categorias">Categorias</a></li>
-                        <li id="login-link"><a href="login.html">Entrar</a></li>
-                        <li class="user-nav" style="display: none;"><a href="#" id="user-name-link"></a></li>
-                        <li class="user-nav" style="display: none;"><a href="comotrabalhamos.html">Como Trabalhamos</a></li>
-                        <li class="user-nav" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
-                    </ul>
-                </nav>
-                <div class="header-actions">
-                    <a href="carrinho.html" class="cart-icon"><span class="cart-count" id="cart-count">0</span>🛒</a>
-                </div>
-                <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
-            </div>
-        `;
-        initHeaderEvents();
-    }
-
-    // 2. UTILITÁRIOS
+    // --- FUNÇÕES UTILITÁRIAS (Globais) ---
     window.showNotification = function(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -42,88 +15,320 @@ document.addEventListener('DOMContentLoaded', async () => {
         note.className = `notification ${type} show`;
         note.textContent = message;
         container.appendChild(note);
-        setTimeout(() => note.remove(), 3000);
+        setTimeout(() => {
+            note.classList.remove('show');
+            setTimeout(() => note.remove(), 500);
+        }, 3000);
     };
-
-    function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
 
     function formatPrice(value) {
         return `R$ ${value.toFixed(2).replace('.', ',')}`;
     }
 
-    // 3. HEADER & AUTH
-    function initHeaderEvents() {
-        const toggle = document.querySelector('.mobile-menu-toggle');
-        const nav = document.querySelector('.main-nav');
-        if (toggle && nav) {
-            toggle.addEventListener('click', () => {
-                nav.classList.toggle('is-active');
-            });
-        }
+    // ============================================================
+    // MÓDULO 1: SISTEMA DE LOGIN E REGISTRO (Prioridade Máxima)
+    // ============================================================
+    (function initAuthSystem() {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
 
-        const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
-        const loginLink = document.getElementById('login-link');
-        const userNavs = document.querySelectorAll('.user-nav');
-        
-        if (user && user.firstName) {
-            if(loginLink) loginLink.style.display = 'none';
-            userNavs.forEach(el => el.style.display = 'block');
-            const nameLink = document.getElementById('user-name-link');
-            if(nameLink) nameLink.textContent = `Olá, ${user.firstName}`;
-        } else {
-            if(loginLink) loginLink.style.display = 'block';
-            userNavs.forEach(el => el.style.display = 'none');
-        }
+        // Se não estamos na página de login, sai deste módulo
+        if (!loginForm && !registerForm) return;
 
-        const logoutBtn = document.getElementById('logout-link');
-        if(logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
+        console.log("Sistema de Autenticação Iniciado.");
+
+        // 1. Alternância entre Login e Registro
+        const showRegisterBtn = document.getElementById('show-register');
+        const showLoginBtn = document.getElementById('show-login');
+        const loginContainer = document.getElementById('login-form-container');
+        const registerContainer = document.getElementById('register-form-container');
+
+        if (showRegisterBtn && showLoginBtn) {
+            showRegisterBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                localStorage.removeItem(CONFIG.localStorageUserKey);
-                window.location.reload();
+                loginContainer.style.display = 'none';
+                registerContainer.style.display = 'block';
+            });
+
+            showLoginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                registerContainer.style.display = 'none';
+                loginContainer.style.display = 'block';
             });
         }
 
-        const searchBar = document.getElementById('search-bar');
-        if (searchBar) {
-            searchBar.addEventListener('input', debounce((e) => {
-                const term = e.target.value.toLowerCase();
-                const cards = document.querySelectorAll('.game-card');
-                let found = false;
-                
-                cards.forEach(card => {
-                    const title = card.querySelector('h3').textContent.toLowerCase();
-                    if (title.includes(term)) {
-                        card.style.display = 'flex';
-                        card.classList.add('is-visible');
-                        found = true;
-                    } else {
-                        card.style.display = 'none';
-                        card.classList.remove('is-visible');
-                    }
-                });
-                
-                const noResults = document.getElementById('no-results-message');
-                if(noResults) noResults.style.display = found ? 'none' : 'block';
-            }, 300));
+        // 2. Lógica de Login
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = loginForm.querySelector('button');
+                const originalText = btn.textContent;
+                btn.textContent = 'Acessando...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(`${CONFIG.apiBaseUrl}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: document.getElementById('login-email').value,
+                            password: document.getElementById('login-password').value
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok) throw new Error(data.message || 'Falha ao entrar.');
+
+                    localStorage.setItem(CONFIG.localStorageUserKey, JSON.stringify(data.user));
+                    showNotification('Acesso Autorizado.', 'success');
+                    setTimeout(() => window.location.href = 'index.html', 1000);
+
+                } catch (err) {
+                    showNotification(err.message, 'error');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            });
         }
 
-        updateCartCount();
+        // 3. Lógica de Registro
+        if (registerForm) {
+            // Validação visual de senha em tempo real
+            const pwInput = document.getElementById('register-password');
+            if (pwInput) {
+                pwInput.addEventListener('input', (e) => {
+                    const v = e.target.value;
+                    const reqs = {
+                        len: document.getElementById('req-length'),
+                        low: document.getElementById('req-lowercase'),
+                        up:  document.getElementById('req-uppercase'),
+                        num: document.getElementById('req-number')
+                    };
+                    if(reqs.len) reqs.len.classList.toggle('valid', v.length >= 8);
+                    if(reqs.low) reqs.low.classList.toggle('valid', /[a-z]/.test(v));
+                    if(reqs.up)  reqs.up.classList.toggle('valid', /[A-Z]/.test(v));
+                    if(reqs.num) reqs.num.classList.toggle('valid', /[0-9]/.test(v));
+                });
+            }
+
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const pw = document.getElementById('register-password').value;
+                const cpw = document.getElementById('confirm-password').value;
+                
+                if (pw !== cpw) return showNotification('Senhas não conferem.', 'error');
+
+                const btn = registerForm.querySelector('button');
+                const originalText = btn.textContent;
+                btn.textContent = 'Forjando Chave...';
+                btn.disabled = true;
+
+                const formData = {
+                    firstName: document.getElementById('register-firstName').value,
+                    lastName: document.getElementById('register-lastName').value,
+                    email: document.getElementById('register-email').value,
+                    password: pw,
+                    confirm_password: cpw,
+                    school: document.getElementById('school').value,
+                    grade: document.getElementById('grade').value,
+                    course: document.getElementById('course').value,
+                    phone: document.getElementById('phone').value,
+                    cpf: document.getElementById('cpf').value
+                };
+
+                try {
+                    const res = await fetch(`${CONFIG.apiBaseUrl}/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok) throw new Error(data.message || 'Erro no registro.');
+
+                    localStorage.setItem(CONFIG.localStorageUserKey, JSON.stringify(data.user));
+                    showNotification('Chave Criada com Sucesso!', 'success');
+                    setTimeout(() => window.location.href = 'index.html', 1500);
+
+                } catch (err) {
+                    showNotification(err.message, 'error');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+    })();
+
+    // ============================================================
+    // MÓDULO 2: INTERFACE DA LOJA (Header, Carrinho, Jogos)
+    // ============================================================
+    // Só executa se NÃO estivermos na página de login (para evitar erros)
+    if (!document.querySelector('.login-page-body')) {
+        
+        // Injeção do Header
+        const headerEl = document.querySelector('.site-header');
+        if (headerEl && headerEl.innerHTML.trim() === '') {
+            headerEl.innerHTML = `
+                <div class="container">
+                    <a href="index.html" class="logo">Pixel Vault</a>
+                    <div class="search-container">
+                        <input type="search" id="search-bar" placeholder="Buscar jogos...">
+                    </div>
+                    <nav class="main-nav">
+                        <ul id="main-menu">
+                            <li><a href="index.html#destaques">Destaques</a></li>
+                            <li><a href="index.html#categorias">Categorias</a></li>
+                            <li id="login-link"><a href="login.html">Entrar</a></li>
+                            <li class="user-nav" style="display: none;"><a href="#" id="user-name-link"></a></li>
+                            <li class="user-nav" style="display: none;"><a href="comotrabalhamos.html">Como Trabalhamos</a></li>
+                            <li class="user-nav" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
+                        </ul>
+                    </nav>
+                    <div class="header-actions">
+                        <a href="carrinho.html" class="cart-icon"><span class="cart-count" id="cart-count">0</span>🛒</a>
+                    </div>
+                    <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
+                </div>
+            `;
+            initHeaderEvents();
+        }
+
+        function initHeaderEvents() {
+            // Lógica de Sessão e Menu
+            const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
+            const loginLink = document.getElementById('login-link');
+            const userNavs = document.querySelectorAll('.user-nav');
+            
+            if (user && user.firstName) {
+                if(loginLink) loginLink.style.display = 'none';
+                userNavs.forEach(el => el.style.display = 'block');
+                const nameLink = document.getElementById('user-name-link');
+                if(nameLink) nameLink.textContent = `Olá, ${user.firstName}`;
+            } else {
+                if(loginLink) loginLink.style.display = 'block';
+                userNavs.forEach(el => el.style.display = 'none');
+            }
+
+            // Logout
+            const logoutBtn = document.getElementById('logout-link');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem(CONFIG.localStorageUserKey);
+                    window.location.reload();
+                });
+            }
+
+            // Mobile Toggle
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            const nav = document.querySelector('.main-nav');
+            if (toggle && nav) {
+                toggle.addEventListener('click', () => nav.classList.toggle('is-active'));
+            }
+
+            // Carrinho Count
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+            const el = document.getElementById('cart-count');
+            if (el) el.textContent = cart.length;
+        }
+
+        // Carregar Jogos (Apenas se game-grid existir)
+        const gameGrid = document.querySelector('.game-grid');
+        if (gameGrid) {
+            try {
+                gameGrid.innerHTML = '<div class="loading-arsenal">ACESSANDO O COFRE...</div>';
+                const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
+                if(!res.ok) throw new Error('Erro na API');
+                const games = await res.json();
+                
+                gameGrid.innerHTML = '';
+                
+                // Lógica de Renderização (igual à anterior)
+                const availableGames = games.filter(g => !g.isComingSoon);
+                const dropGames = games.filter(g => g.isComingSoon);
+                renderGames(availableGames, gameGrid);
+                if(dropGames.length > 0) {
+                    const banner = document.createElement('div');
+                    banner.className = 'glitch-banner';
+                    banner.style.gridColumn = '1 / -1';
+                    banner.innerHTML = `<h3>/// DROP RESTRITO ///</h3><p>[DADOS CRIPTOGRAFADOS]</p>`;
+                    gameGrid.appendChild(banner);
+                    renderGames(dropGames, gameGrid, true);
+                }
+            } catch (e) {
+                console.error(e);
+                gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão.</p>';
+            }
+
+            // Event Delegation para Adicionar ao Carrinho
+            gameGrid.addEventListener('click', (e) => {
+                const btn = e.target.closest('.add-cart-icon-btn');
+                if (e.target.classList.contains('price-info-link')) { e.preventDefault(); openPriceModal(); return; }
+                
+                if (btn) {
+                    const card = btn.closest('.game-card');
+                    if(card.classList.contains('locked')) return;
+                    const select = card.querySelector('.license-select');
+                    const selectedOption = select.options[select.selectedIndex];
+                    const item = {
+                        id: btn.dataset.id,
+                        cartId: Date.now(),
+                        title: btn.dataset.title,
+                        imageSrc: btn.dataset.img,
+                        licenseType: selectedOption.value,
+                        licenseLabel: selectedOption.text.split(' (')[0],
+                        price: parseFloat(selectedOption.dataset.price)
+                    };
+                    let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+                    cart.push(item);
+                    localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
+                    updateCartCount();
+                    showNotification(`"${item.title}" adicionado!`);
+                }
+            });
+        }
     }
 
-    function updateCartCount() {
-        const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
-        const el = document.getElementById('cart-count');
-        if(el) el.textContent = cart.length;
+    // Funções auxiliares de renderização (mantidas para garantir funcionamento)
+    function renderGames(list, container, isLocked = false) {
+        list.forEach(game => {
+            const card = document.createElement('div');
+            card.className = `game-card animate-on-scroll ${isLocked ? 'locked' : ''}`;
+            card.dataset.category = game.categories ? game.categories.join(' ') : '';
+            card.innerHTML = `
+                ${isLocked ? '<div class="lock-overlay"><span class="lock-text">EM BREVE</span></div>' : ''}
+                <img src="${game.image}" alt="${game.title}">
+                <div class="card-content">
+                    <h3>${game.title}</h3>
+                    ${!isLocked ? `
+                    <select class="license-select">
+                        <option value="pessoal" data-price="20">PC Pessoal (R$ 20)</option>
+                        <option value="escola" data-price="30">PC Escola (R$ 30)</option>
+                        <option value="ambos" data-price="50">Ambos (R$ 50)</option>
+                    </select>
+                    <a class="price-info-link">Por que esses valores?</a>
+                    ` : ''}
+                    <div class="price" id="price-${game._id}">${isLocked ? '???' : 'R$ 20,00'}</div>
+                </div>
+                ${!isLocked ? `<button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-img="${game.image}">ADICIONAR 🛒</button>` : ''}
+            `;
+            container.appendChild(card);
+            if (!isLocked) {
+                const select = card.querySelector('.license-select');
+                const priceEl = card.querySelector(`#price-${game._id}`);
+                select.addEventListener('change', (e) => {
+                    const newPrice = parseFloat(e.target.options[e.target.selectedIndex].dataset.price);
+                    priceEl.textContent = formatPrice(newPrice);
+                });
+            }
+        });
     }
 
-    // 4. MODAL DE PREÇOS
+    // Modal de Preços
     function openPriceModal() {
         let modal = document.getElementById('price-modal');
         if (!modal) {
@@ -135,173 +340,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button class="modal-close-btn">&times;</button>
                     <h2 class="modal-title">Entenda os Valores</h2>
                     <ul class="price-rules">
-                        <li><strong>R$ 20,00 (Digital):</strong> Valor fixo padrão para todos os jogos da plataforma.</li>
-                        <li><strong>R$ 30,00 (Escola):</strong> Inclui taxa adicional de R$ 10,00 referente à mídia física (pendrive) necessária para burlar restrições escolares.</li>
-                        <li><strong>R$ 50,00 (Combo):</strong> A junção das duas versões (Pessoal + Escola), garantindo acesso total em qualquer ambiente.</li>
+                        <li><strong>R$ 20,00 (Digital):</strong> Acesso padrão.</li>
+                        <li><strong>R$ 30,00 (Escola):</strong> Inclui taxa de mídia física (pendrive).</li>
+                        <li><strong>R$ 50,00 (Combo):</strong> Acesso total (Casa + Escola).</li>
                     </ul>
                     <button class="cta-button modal-close-btn-action">Entendido</button>
                 </div>
             `;
             document.body.appendChild(modal);
-            
-            modal.querySelector('.modal-close-btn').onclick = () => modal.remove();
-            modal.querySelector('.modal-close-btn-action').onclick = () => modal.remove();
-            modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
-        } else {
-            modal.classList.add('is-active');
-        }
+            modal.onclick = (e) => { if(e.target === modal || e.target.classList.contains('modal-close-btn') || e.target.classList.contains('modal-close-btn-action')) modal.remove(); };
+        } else { modal.classList.add('is-active'); }
     }
 
-    // 5. LOJA (Lógica Corrigida de Duplicação)
-    const gameGrid = document.querySelector('.game-grid');
-    if (gameGrid) {
-        try {
-            gameGrid.innerHTML = '<div class="loading-arsenal">ACESSANDO O COFRE...</div>';
-            
-            const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
-            if(!res.ok) throw new Error('Erro na API');
-            const games = await res.json();
-            
-            gameGrid.innerHTML = ''; 
-
-            if(games.length === 0) {
-                gameGrid.innerHTML = '<p style="text-align: center; width: 100%;">Cofre vazio.</p>';
-            } else {
-                const availableGames = games.filter(g => !g.isComingSoon);
-                const dropGames = games.filter(g => g.isComingSoon);
-
-                renderGames(availableGames, gameGrid);
-
-                if(dropGames.length > 0) {
-                    const banner = document.createElement('div');
-                    banner.className = 'glitch-banner';
-                    banner.style.gridColumn = '1 / -1';
-                    banner.innerHTML = `<h3>/// DROP RESTRITO ///</h3><p>[DADOS CRIPTOGRAFADOS]</p>`;
-                    gameGrid.appendChild(banner);
-                    renderGames(dropGames, gameGrid, true);
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão. Tente recarregar.</p>';
-        }
-
-        // --- CORREÇÃO: EVENTO DE CLIQUE FORA DO LOOP ---
-        // Agora o listener é adicionado apenas UMA vez ao container principal
-        gameGrid.addEventListener('click', (e) => {
-            const btn = e.target.closest('.add-cart-icon-btn');
-            
-            // Se clicou no link "Por que esses valores?"
-            if (e.target.classList.contains('price-info-link')) {
-                e.preventDefault();
-                openPriceModal();
-                return;
-            }
-
-            // Se clicou no botão de adicionar
-            if (btn) {
-                const card = btn.closest('.game-card');
-                // Proteção contra cards bloqueados (embora o botão não deva aparecer)
-                if(card.classList.contains('locked')) return;
-
-                const select = card.querySelector('.license-select');
-                const selectedOption = select.options[select.selectedIndex];
-                
-                const item = {
-                    id: btn.dataset.id,
-                    cartId: Date.now(), // ID único para o carrinho
-                    title: btn.dataset.title,
-                    imageSrc: btn.dataset.img,
-                    licenseType: selectedOption.value,
-                    licenseLabel: selectedOption.text.split(' (')[0],
-                    price: parseFloat(selectedOption.dataset.price)
-                };
-
-                let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
-                cart.push(item);
-                localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
-                
-                updateCartCount();
-                showNotification(`"${item.title}" (${item.licenseLabel}) adicionado!`);
-            }
-        });
-    }
-
-    function renderGames(list, container, isLocked = false) {
-        list.forEach(game => {
-            const card = document.createElement('div');
-            card.className = `game-card animate-on-scroll ${isLocked ? 'locked' : ''}`;
-            card.dataset.category = game.categories ? game.categories.join(' ') : '';
-            
-            card.innerHTML = `
-                ${isLocked ? '<div class="lock-overlay"><span class="lock-text">EM BREVE</span></div>' : ''}
-                <img src="${game.image}" alt="${game.title}">
-                <div class="card-content">
-                    <h3>${game.title}</h3>
-                    
-                    ${!isLocked ? `
-                    <select class="license-select">
-                        <option value="pessoal" data-price="20">PC Pessoal (R$ 20)</option>
-                        <option value="escola" data-price="30">PC Escola (R$ 30)</option>
-                        <option value="ambos" data-price="50">Ambos (R$ 50)</option>
-                    </select>
-                    <a class="price-info-link">Por que esses valores?</a>
-                    ` : ''}
-
-                    <div class="price" id="price-${game._id}">${isLocked ? '???' : 'R$ 20,00'}</div>
-                </div>
-                
-                ${!isLocked ? `
-                <button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-img="${game.image}">
-                    ADICIONAR <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                </button>
-                ` : ''}
-            `;
-            container.appendChild(card);
-
-            if (!isLocked) {
-                const select = card.querySelector('.license-select');
-                const priceEl = card.querySelector(`#price-${game._id}`);
-                
-                select.addEventListener('change', (e) => {
-                    const newPrice = parseFloat(e.target.options[e.target.selectedIndex].dataset.price);
-                    priceEl.textContent = formatPrice(newPrice);
-                    priceEl.style.color = '#fff';
-                    setTimeout(() => priceEl.style.color = 'var(--primary-color)', 200);
-                });
-            }
-        });
-    }
-
-    // 6. BOTÃO COMPARTILHAR
-    document.addEventListener('click', (e) => {
-        const shareBtn = e.target.closest('#share-button'); 
-        if (shareBtn) {
-            e.preventDefault();
-            const text = "Loja de jogos para PC da escola: " + window.location.origin;
-            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
-        }
-    });
-
-    // 7. DESVIO AUTOMÁTICO DO RODAPÉ
-    const footerElement = document.querySelector('.site-footer-bottom');
-    const shareButtonElement = document.getElementById('share-button');
-
-    if (footerElement && shareButtonElement) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    shareButtonElement.classList.add('lift-up');
-                } else {
-                    shareButtonElement.classList.remove('lift-up');
-                }
-            });
-        }, { root: null, threshold: 0.1 });
-        observer.observe(footerElement);
-    }
-
-    // 8. CARRINHO (PÁGINA)
+    // MÓDULO 3: PÁGINA DO CARRINHO
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
@@ -325,9 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <span class="item-price">${formatPrice(item.price)}</span>
                             </div>
                         </div>
-                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})" aria-label="Remover">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
+                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})" aria-label="Remover">🗑️</button>
                     </div>
                 `;
             });
@@ -341,50 +390,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         const checkoutBtn = document.querySelector('.checkout-btn');
-        if(checkoutBtn) {
+        if (checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
                 const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
-                if(!user) {
-                    showNotification('Faça login para finalizar.', 'info');
-                    setTimeout(() => window.location.href = 'login.html', 1500);
-                    return;
-                }
+                if (!user) return window.location.href = 'login.html';
                 
-                let msg = `Olá! Sou ${user.firstName} ${user.lastName} (${user.school}).\nGostaria de comprar:\n\n`;
+                let msg = `Olá! Sou ${user.firstName} ${user.lastName}.\nComprando:\n`;
                 let total = 0;
-                
                 cart.forEach(i => {
-                    msg += `🎮 ${i.title}\n   └ [${i.licenseLabel}] - ${formatPrice(i.price)}\n`;
+                    msg += `🎮 ${i.title} [${i.licenseLabel}] - ${formatPrice(i.price)}\n`;
                     total += i.price;
                 });
-                
-                msg += `\n💰 *Total: ${formatPrice(total)}*\n\nComo posso realizar o pagamento?`;
+                msg += `\nTotal: ${formatPrice(total)}`;
                 window.open(`https://wa.me/5511914521982?text=${encodeURIComponent(msg)}`, '_blank');
             });
         }
-    }
-
-    // Filtros
-    const categoryBtns = document.querySelectorAll('.category-btn');
-    if(categoryBtns.length > 0) {
-        categoryBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelector('.category-btn.is-active').classList.remove('is-active');
-                btn.classList.add('is-active');
-                const cat = btn.dataset.category;
-                const cards = document.querySelectorAll('.game-card');
-                
-                cards.forEach(card => {
-                    const cardCats = card.dataset.category || '';
-                    if (cat === 'all' || cardCats.includes(cat)) {
-                        card.style.display = 'flex';
-                        card.classList.add('is-visible');
-                    } else {
-                        card.style.display = 'none';
-                        card.classList.remove('is-visible');
-                    }
-                });
-            });
-        });
     }
 });

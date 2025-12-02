@@ -307,7 +307,7 @@ body {
 
 /* Forms */
 .login-page-body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-.form-wrapper { background: var(--card-bg); padding: 40px; border-radius: 10px; border: 1px solid var(--card-border); max-width: 480px; width: 100%; }
+.form-wrapper { background: var(--card-bg); padding: 40px; border-radius: 10px; border: 1px solid var(--card-border); max-width: 480px; width: 100%; position: relative; z-index: 10; /* Garante que está acima das estrelas */}
 .logo--standalone { position: absolute; top: 30px; }
 .input-group { margin-bottom: 20px; display: flex; flex-direction: column; }
 .input-group input, .input-group select { padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border); color: #fff; border-radius: 5px; }
