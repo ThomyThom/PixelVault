@@ -1,13 +1,13 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- CONFIGURAÇÕES GLOBAIS ---
     const CONFIG = {
         apiBaseUrl: '/api',
-        localStorageUserKey: 'pixelVaultUser',
-        localStorageCartKey: 'pixelVaultCart'
+        // Mudamos para sessionStorage para segurança em PCs públicos
+        storageUserKey: 'pixelVaultUser', 
+        storageTokenKey: 'pixelVaultToken' 
     };
 
-    // --- FUNÇÕES UTILITÁRIAS ---
+    // --- UTILITÁRIOS ---
     window.showNotification = function(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -15,58 +15,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         note.className = `notification ${type} show`;
         note.textContent = message;
         container.appendChild(note);
-        setTimeout(() => {
-            note.classList.remove('show');
-            setTimeout(() => note.remove(), 500);
-        }, 3000);
+        setTimeout(() => { note.classList.remove('show'); setTimeout(() => note.remove(), 500); }, 3000);
     };
 
-    function formatPrice(value) {
-        return `R$ ${value.toFixed(2).replace('.', ',')}`;
-    }
+    function formatPrice(value) { return `R$ ${value.toFixed(2).replace('.', ',')}`; }
 
-    function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
-
-    // ============================================================
-    // MÓDULO 1: CABEÇALHO E NAVEGAÇÃO (Atualizado)
-    // ============================================================
+    // --- MÓDULO 1: CABEÇALHO (UI Básica) ---
     const headerEl = document.querySelector('.site-header');
     if (headerEl && headerEl.innerHTML.trim() === '') {
-        // INJEÇÃO DO HTML DO CABEÇALHO
         headerEl.innerHTML = `
             <div class="container">
                 <a href="index.html" class="logo">Pixel Vault</a>
-                
-                <div class="search-container">
-                    <input type="search" id="search-bar" placeholder="Buscar jogos...">
-                </div>
-
+                <div class="search-container"><input type="search" id="search-bar" placeholder="Buscar jogos..."></div>
                 <nav class="main-nav">
                     <ul id="main-menu">
                         <li><a href="index.html#destaques">Destaques</a></li>
                         <li><a href="index.html#categorias">Categorias</a></li>
+                        <li id="login-link"><a href="login.html">Entrar</a></li>
+                        <li class="user-nav" style="display: none;"><a href="#" id="user-name-link"></a></li>
                         <li class="user-nav" style="display: none;"><a href="comotrabalhamos.html">Como Trabalhamos</a></li>
-                        <li class="user-nav mobile-only" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
+                        <li class="user-nav" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
                     </ul>
                 </nav>
-
                 <div class="header-actions">
-                    <a href="carrinho.html" class="cart-icon" aria-label="Carrinho">
-                        <span class="cart-count" id="cart-count">0</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                    </a>
-
-                    <a href="login.html" id="user-profile-icon" class="user-icon" aria-label="Perfil">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    </a>
+                    <a href="carrinho.html" class="cart-icon"><span class="cart-count" id="cart-count">0</span>🛒</a>
+                    <a href="login.html" id="user-profile-icon" class="user-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></a>
                 </div>
-
                 <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
             </div>
         `;
@@ -74,119 +48,99 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function initHeaderEvents() {
-        const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
-        const profileIcon = document.getElementById('user-profile-icon');
-        const userNavs = document.querySelectorAll('.user-nav');
+        // Agora usamos sessionStorage
+        const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
+        const token = sessionStorage.getItem(CONFIG.storageTokenKey);
         
-        // Lógica de Estado do Usuário
-        if (user && user.firstName) {
-            // LOGADO
+        const loginLink = document.getElementById('login-link');
+        const userNavs = document.querySelectorAll('.user-nav');
+        const profileIcon = document.getElementById('user-profile-icon');
+        const nameLink = document.getElementById('user-name-link');
+
+        // Verifica se tem usuário E token válido
+        if (user && token) {
+            if(loginLink) loginLink.style.display = 'none';
             userNavs.forEach(el => el.style.display = 'block');
+            if(nameLink) nameLink.textContent = `Olá, ${user.firstName}`;
             
-            // O ícone de perfil leva para a página de perfil (futura)
-            // Por enquanto, pode levar para home ou #, mas já deixo preparado:
-            profileIcon.href = "perfil.html"; 
-            profileIcon.classList.add('is-logged-in'); // Classe para estilizar se quiser (ex: cor diferente)
-            profileIcon.title = `Olá, ${user.firstName}`; // Tooltip nativo
+            profileIcon.href = "perfil.html";
+            profileIcon.classList.add('is-logged-in');
         } else {
-            // DESLOGADO
+            if(loginLink) loginLink.style.display = 'block';
             userNavs.forEach(el => el.style.display = 'none');
-            
-            // O ícone de perfil leva para Login
             profileIcon.href = "login.html";
             profileIcon.classList.remove('is-logged-in');
-            profileIcon.title = "Entrar";
         }
 
-        // Mobile Menu Toggle
-        const toggle = document.querySelector('.mobile-menu-toggle');
-        const nav = document.querySelector('.main-nav');
-        if (toggle && nav) {
-            toggle.addEventListener('click', () => {
-                toggle.classList.toggle('is-active');
-                nav.classList.toggle('is-active');
-            });
-        }
-
-        // Logout Logic
+        // Logout
         const logoutBtn = document.getElementById('logout-link');
-        if (logoutBtn) {
+        if(logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                localStorage.removeItem(CONFIG.localStorageUserKey);
-                window.location.reload();
+                sessionStorage.clear(); // Limpa tudo
+                localStorage.removeItem(CONFIG.localStorageCartKey); // Opcional: limpar carrinho tb
+                window.location.href = 'index.html';
             });
         }
 
-        // Search Bar Logic
+        // Mobile Menu
+        const toggle = document.querySelector('.mobile-menu-toggle');
+        const nav = document.querySelector('.main-nav');
+        if (toggle && nav) toggle.addEventListener('click', () => nav.classList.toggle('is-active'));
+
+        // Search
         const searchBar = document.getElementById('search-bar');
         if (searchBar) {
-            searchBar.addEventListener('input', debounce((e) => {
-                const term = e.target.value.toLowerCase();
-                const cards = document.querySelectorAll('.game-card');
-                let found = false;
-                
-                cards.forEach(card => {
-                    const title = card.querySelector('h3').textContent.toLowerCase();
-                    if (title.includes(term)) {
-                        card.style.display = 'flex';
-                        card.classList.add('is-visible');
-                        found = true;
-                    } else {
-                        card.style.display = 'none';
-                        card.classList.remove('is-visible');
-                    }
-                });
-                const noResults = document.getElementById('no-results-message');
-                if(noResults) noResults.style.display = found ? 'none' : 'block';
-            }, 300));
+            let timeout;
+            searchBar.addEventListener('input', (e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    const term = e.target.value.toLowerCase();
+                    const cards = document.querySelectorAll('.game-card');
+                    let found = false;
+                    cards.forEach(card => {
+                        if (card.classList.contains('skeleton-card')) return;
+                        const title = card.querySelector('h3').textContent.toLowerCase();
+                        if (title.includes(term)) {
+                            card.style.display = 'flex';
+                            card.classList.add('is-visible');
+                            found = true;
+                        } else {
+                            card.style.display = 'none';
+                            card.classList.remove('is-visible');
+                        }
+                    });
+                    const noResults = document.getElementById('no-results-message');
+                    if (noResults) noResults.style.display = found ? 'none' : 'block';
+                }, 300);
+            });
         }
-
         updateCartCount();
     }
 
     function updateCartCount() {
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
         const el = document.getElementById('cart-count');
-        if (el) el.textContent = cart.length;
+        if(el) el.textContent = cart.length;
     }
 
-    // ============================================================
-    // MÓDULO 2: AUTENTICAÇÃO (Login/Registro)
-    // ============================================================
-    // Isolado para rodar apenas nas páginas de formulário
-    (function initAuthSystem() {
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
+    // --- MÓDULO 2: AUTENTICAÇÃO (JWT) ---
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
 
-        if (!loginForm && !registerForm) return;
-
-        // Toggle Login/Register
+    if (loginForm || registerForm) {
+        // Toggle Forms
         const showRegisterBtn = document.getElementById('show-register');
         const showLoginBtn = document.getElementById('show-login');
-        if (showRegisterBtn) {
-            showRegisterBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.getElementById('login-form-container').style.display = 'none';
-                document.getElementById('register-form-container').style.display = 'block';
-            });
-        }
-        if (showLoginBtn) {
-            showLoginBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.getElementById('register-form-container').style.display = 'none';
-                document.getElementById('login-form-container').style.display = 'block';
-            });
-        }
+        if(showRegisterBtn) showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('login-form-container').style.display='none'; document.getElementById('register-form-container').style.display='block'; });
+        if(showLoginBtn) showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('register-form-container').style.display='none'; document.getElementById('login-form-container').style.display='block'; });
 
         // Login Submit
         if (loginForm) {
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = loginForm.querySelector('button');
-                const originalText = btn.textContent;
-                btn.textContent = 'Acessando...';
-                btn.disabled = true;
+                btn.textContent = 'Autenticando...'; btn.disabled = true;
 
                 try {
                     const res = await fetch(`${CONFIG.apiBaseUrl}/auth/login`, {
@@ -200,13 +154,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.message);
 
-                    localStorage.setItem(CONFIG.localStorageUserKey, JSON.stringify(data.user));
-                    showNotification('Acesso Autorizado.', 'success');
+                    // SALVA TOKEN E DADOS BÁSICOS NO SESSION STORAGE
+                    sessionStorage.setItem(CONFIG.storageTokenKey, data.token);
+                    sessionStorage.setItem(CONFIG.storageUserKey, JSON.stringify(data.user));
+                    
+                    showNotification('Bem-vindo de volta!', 'success');
                     setTimeout(() => window.location.href = 'index.html', 1000);
                 } catch (err) {
                     showNotification(err.message, 'error');
-                    btn.textContent = originalText;
-                    btn.disabled = false;
+                    btn.textContent = 'Entrar'; btn.disabled = false;
                 }
             });
         }
@@ -217,12 +173,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 e.preventDefault();
                 const pw = document.getElementById('register-password').value;
                 const cpw = document.getElementById('confirm-password').value;
-                if (pw !== cpw) return showNotification('Senhas não conferem.', 'error');
+                if (pw !== cpw) return showNotification('Senhas não batem.', 'error');
 
                 const btn = registerForm.querySelector('button');
-                const originalText = btn.textContent;
-                btn.textContent = 'Criando Chave...';
-                btn.disabled = true;
+                btn.textContent = 'Criando...'; btn.disabled = true;
 
                 const formData = {
                     firstName: document.getElementById('register-firstName').value,
@@ -246,21 +200,62 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.message);
 
-                    localStorage.setItem(CONFIG.localStorageUserKey, JSON.stringify(data.user));
-                    showNotification('Registro com Sucesso!', 'success');
+                    sessionStorage.setItem(CONFIG.storageTokenKey, data.token);
+                    sessionStorage.setItem(CONFIG.storageUserKey, JSON.stringify(data.user));
+                    
+                    showNotification('Conta criada!', 'success');
                     setTimeout(() => window.location.href = 'index.html', 1500);
                 } catch (err) {
                     showNotification(err.message, 'error');
-                    btn.textContent = originalText;
-                    btn.disabled = false;
+                    btn.textContent = 'Registrar'; btn.disabled = false;
                 }
             });
         }
-    })();
+    }
 
-    // ============================================================
-    // MÓDULO 3: LOJA E JOGOS
-    // ============================================================
+    // --- MÓDULO 3: PÁGINA DE PERFIL (Protegida por Token) ---
+    if (document.querySelector('.profile-section')) {
+        const token = sessionStorage.getItem(CONFIG.storageTokenKey);
+        
+        if (!token) {
+            window.location.href = 'login.html';
+        } else {
+            try {
+                // Busca os dados sensíveis usando o Token
+                const res = await fetch(`${CONFIG.apiBaseUrl}/auth/me`, {
+                    headers: { 'x-auth-token': token }
+                });
+                
+                if (!res.ok) throw new Error('Sessão expirada');
+                const userData = await res.json();
+
+                // Preenche a tela
+                document.getElementById('profile-name').textContent = `${userData.firstName} ${userData.lastName}`;
+                document.getElementById('profile-avatar').textContent = userData.firstName.charAt(0).toUpperCase();
+                document.getElementById('profile-email').textContent = userData.email;
+                document.getElementById('profile-phone').textContent = userData.phone;
+                document.getElementById('profile-cpf').textContent = userData.cpf;
+                
+                const schoolMap = { pentagono: 'Colégio Pentágono', singular: 'Colégio Singular' };
+                document.getElementById('profile-school').textContent = schoolMap[userData.school] || userData.school;
+                document.getElementById('profile-grade').textContent = userData.grade ? `${userData.grade}º Ano` : '-';
+                document.getElementById('profile-course').textContent = userData.course ? userData.course.toUpperCase() : '-';
+
+                // Botão Logout
+                document.getElementById('logout-btn-profile').addEventListener('click', () => {
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                });
+
+            } catch (err) {
+                console.error(err);
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+    }
+
+    // --- MÓDULO 4: LOJA (Jogos) ---
     const gameGrid = document.querySelector('.game-grid');
     if (gameGrid) {
         try {
@@ -289,17 +284,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão.</p>';
         }
 
-        // Event Delegation para Adicionar ao Carrinho
         gameGrid.addEventListener('click', (e) => {
             const btn = e.target.closest('.add-cart-icon-btn');
             if (e.target.classList.contains('price-info-link')) { e.preventDefault(); openPriceModal(); return; }
-            
             if (btn) {
                 const card = btn.closest('.game-card');
                 if(card.classList.contains('locked')) return;
                 const select = card.querySelector('.license-select');
                 const selectedOption = select.options[select.selectedIndex];
-                
                 const item = {
                     id: btn.dataset.id,
                     cartId: Date.now(),
@@ -309,7 +301,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     licenseLabel: selectedOption.text.split(' (')[0],
                     price: parseFloat(selectedOption.dataset.price)
                 };
-
                 let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
                 cart.push(item);
                 localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
@@ -342,7 +333,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${!isLocked ? `<button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-img="${game.image}">ADICIONAR 🛒</button>` : ''}
             `;
             container.appendChild(card);
-            
             if (!isLocked) {
                 const select = card.querySelector('.license-select');
                 const priceEl = card.querySelector(`#price-${game._id}`);
@@ -354,7 +344,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Modal de Preços
     function openPriceModal() {
         let modal = document.getElementById('price-modal');
         if (!modal) {
@@ -366,9 +355,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button class="modal-close-btn">&times;</button>
                     <h2 class="modal-title">Entenda os Valores</h2>
                     <ul class="price-rules">
-                        <li><strong>R$ 20,00 (Digital):</strong> Acesso apenas aos arquivos do jogo.</li>
-                        <li><strong>R$ 30,00 (Escola):</strong> Inclui taxa de mídia física (pendrive) e setup.</li>
-                        <li><strong>R$ 50,00 (Combo):</strong> Acesso total para ambas as plataformas.</li>
+                        <li><strong>R$ 20,00 (Digital):</strong> Acesso padrão.</li>
+                        <li><strong>R$ 30,00 (Escola):</strong> Inclui taxa de mídia física (pendrive).</li>
+                        <li><strong>R$ 50,00 (Combo):</strong> Acesso total.</li>
                     </ul>
                     <button class="cta-button modal-close-btn-action">Entendido</button>
                 </div>
@@ -378,14 +367,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else { modal.classList.add('is-active'); }
     }
 
-    // ============================================================
-    // MÓDULO 4: PÁGINA DO CARRINHO
-    // ============================================================
+    // --- MÓDULO 5: CARRINHO ---
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
         const totalEl = document.getElementById('cart-total');
-        
         if (cart.length === 0) {
             cartList.innerHTML = '<p class="empty-cart-msg">Seu carrinho está vazio.</p>';
             if(totalEl) totalEl.textContent = 'R$ 0,00';
@@ -399,10 +385,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <img src="${item.imageSrc}" alt="${item.title}">
                         <div class="cart-item-info">
                             <h4>${item.title}</h4>
-                            <div class="cart-item-meta">
-                                <span class="license-tag">${item.licenseLabel}</span>
-                                <span class="item-price">${formatPrice(item.price)}</span>
-                            </div>
+                            <div class="cart-item-meta"><span class="license-tag">${item.licenseLabel}</span><span class="item-price">${formatPrice(item.price)}</span></div>
                         </div>
                         <button class="remove-item-btn" onclick="removeItem(${item.cartId})">🗑️</button>
                     </div>
@@ -410,80 +393,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if(totalEl) totalEl.textContent = formatPrice(total);
         }
-
         window.removeItem = function(cartId) {
             const newCart = cart.filter(i => i.cartId !== cartId);
             localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(newCart));
             window.location.reload();
         };
-
         const checkoutBtn = document.querySelector('.checkout-btn');
         if (checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
-                const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
-                if(!user) return window.location.href = 'login.html';
-                
-                let msg = `Olá! Sou ${user.firstName} ${user.lastName} (${user.school}).\nGostaria de comprar:\n\n`;
+                const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
+                if (!user) { showNotification('Faça login para finalizar.', 'info'); setTimeout(() => window.location.href = 'login.html', 1500); return; }
+                let msg = `Olá! Sou ${user.firstName} ${user.lastName}.\nGostaria de comprar:\n\n`;
                 let total = 0;
-                cart.forEach(i => {
-                    msg += `🎮 ${i.title} [${i.licenseLabel}] - ${formatPrice(i.price)}\n`;
-                    total += i.price;
-                });
-                msg += `\n💰 *Total: ${formatPrice(total)}*\n\nComo posso realizar o pagamento?`;
+                cart.forEach(i => { msg += `🎮 ${i.title} [${i.licenseLabel}] - ${formatPrice(i.price)}\n`; total += i.price; });
+                msg += `\n💰 *Total: ${formatPrice(total)}*`;
                 window.open(`https://wa.me/5511914521982?text=${encodeURIComponent(msg)}`, '_blank');
             });
         }
-    }
-
-    // 1.1 Botão de Compartilhar
-    document.addEventListener('click', (e) => {
-        const shareBtn = e.target.closest('#share-button'); 
-        if (shareBtn) {
-            e.preventDefault();
-            const text = "Pixel Vault: A loja de jogos oficial da galera. Confere aí: " + window.location.origin;
-            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
-        }
-    });
-
-    // 1.2 Filtros
-    const categoryBtns = document.querySelectorAll('.category-btn');
-    if (categoryBtns.length > 0) {
-        categoryBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('is-active'));
-                btn.classList.add('is-active');
-                const cat = btn.dataset.category;
-                const cards = document.querySelectorAll('.game-card');
-                let found = false;
-                cards.forEach(card => {
-                    if(card.classList.contains('skeleton-card')) return;
-                    const cardCats = card.dataset.category || '';
-                    if (cat === 'all' || cardCats.includes(cat)) {
-                        card.style.display = 'flex';
-                        setTimeout(() => card.classList.add('is-visible'), 10);
-                        found = true;
-                    } else {
-                        card.style.display = 'none';
-                        card.classList.remove('is-visible');
-                    }
-                });
-                const noResults = document.getElementById('no-results-message');
-                if(noResults) noResults.style.display = found ? 'none' : 'block';
-            });
-        });
-    }
-
-    // 1.3 Rodapé (Lift Button)
-    const footerElement = document.querySelector('.site-footer-bottom');
-    const shareButtonElement = document.getElementById('share-button');
-    if (footerElement && shareButtonElement) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) shareButtonElement.classList.add('lift-up');
-                else shareButtonElement.classList.remove('lift-up');
-            });
-        }, { root: null, threshold: 0.1 });
-        observer.observe(footerElement);
     }
 });
