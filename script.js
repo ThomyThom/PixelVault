@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorageCartKey: 'pixelVaultCart'
     };
 
-    // 1. INJETAR HEADER (Se estiver vazio)
+    // 1. INJETAR HEADER
     const headerEl = document.querySelector('.site-header');
     if (headerEl && headerEl.innerHTML.trim() === '') {
         headerEl.innerHTML = `
@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. HEADER & AUTH
     function initHeaderEvents() {
-        // Mobile Menu
         const toggle = document.querySelector('.mobile-menu-toggle');
         const nav = document.querySelector('.main-nav');
         if (toggle && nav) {
@@ -68,7 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Auth
         const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
         const loginLink = document.getElementById('login-link');
         const userNavs = document.querySelectorAll('.user-nav');
@@ -83,7 +81,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             userNavs.forEach(el => el.style.display = 'none');
         }
 
-        // Logout
         const logoutBtn = document.getElementById('logout-link');
         if(logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
@@ -93,7 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Pesquisa
         const searchBar = document.getElementById('search-bar');
         if (searchBar) {
             searchBar.addEventListener('input', debounce((e) => {
@@ -127,7 +123,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(el) el.textContent = cart.length;
     }
 
-    // 4. LOJA (LÓGICA 20/30/50)
+    // 4. MODAL DE PREÇOS (NOVO)
+    function openPriceModal() {
+        let modal = document.getElementById('price-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'price-modal';
+            modal.className = 'modal-overlay is-active';
+            modal.innerHTML = `
+                <div class="modal-container">
+                    <button class="modal-close-btn">&times;</button>
+                    <h2 class="modal-title">Entenda os Valores</h2>
+                    <ul class="price-rules">
+                        <li><strong>R$ 20,00 (Digital):</strong> Valor fixo padrão para todos os jogos da plataforma.</li>
+                        <li><strong>R$ 30,00 (Escola):</strong> Inclui taxa adicional de R$ 10,00 referente à mídia física (pendrive) necessária para burlar restrições escolares.</li>
+                        <li><strong>R$ 50,00 (Combo):</strong> A junção das duas versões (Pessoal + Escola), garantindo acesso total em qualquer ambiente.</li>
+                    </ul>
+                    <button class="cta-button modal-close-btn-action">Entendido</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Eventos para fechar
+            modal.querySelector('.modal-close-btn').onclick = () => modal.remove();
+            modal.querySelector('.modal-close-btn-action').onclick = () => modal.remove();
+            modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+        } else {
+            modal.classList.add('is-active');
+        }
+    }
+
+    // 5. LOJA
     const gameGrid = document.querySelector('.game-grid');
     if (gameGrid) {
         try {
@@ -144,10 +170,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const availableGames = games.filter(g => !g.isComingSoon);
                 const dropGames = games.filter(g => g.isComingSoon);
 
-                // Renderiza Jogos Normais
                 renderGames(availableGames, gameGrid);
 
-                // Renderiza Drops (Se houver)
                 if(dropGames.length > 0) {
                     const banner = document.createElement('div');
                     banner.className = 'glitch-banner';
@@ -169,9 +193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.className = `game-card animate-on-scroll ${isLocked ? 'locked' : ''}`;
             card.dataset.category = game.categories ? game.categories.join(' ') : '';
             
-            // Lógica do Preço Base (Padrão 20.00 se não definido)
-            const basePrice = 20.00;
-
             card.innerHTML = `
                 ${isLocked ? '<div class="lock-overlay"><span class="lock-text">EM BREVE</span></div>' : ''}
                 <img src="${game.image}" alt="${game.title}">
@@ -184,6 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <option value="escola" data-price="30">PC Escola (R$ 30)</option>
                         <option value="ambos" data-price="50">Ambos (R$ 50)</option>
                     </select>
+                    <a class="price-info-link">Por que esses valores?</a>
                     ` : ''}
 
                     <div class="price" id="price-${game._id}">R$ 20,00</div>
@@ -197,22 +219,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             container.appendChild(card);
 
-            // Evento: Mudar Preço ao trocar opção
             if (!isLocked) {
                 const select = card.querySelector('.license-select');
                 const priceEl = card.querySelector(`#price-${game._id}`);
+                const infoLink = card.querySelector('.price-info-link');
                 
+                // Abre o modal ao clicar no link
+                infoLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openPriceModal();
+                });
+
                 select.addEventListener('change', (e) => {
                     const newPrice = parseFloat(e.target.options[e.target.selectedIndex].dataset.price);
                     priceEl.textContent = formatPrice(newPrice);
-                    // Piscar para indicar mudança
                     priceEl.style.color = '#fff';
                     setTimeout(() => priceEl.style.color = 'var(--primary-color)', 200);
                 });
             }
         });
 
-        // Evento Global: Adicionar ao Carrinho (Captura o valor do select no momento do clique)
         container.addEventListener('click', (e) => {
             const btn = e.target.closest('.add-cart-icon-btn');
             if (btn) {
@@ -221,12 +247,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const selectedOption = select.options[select.selectedIndex];
                 
                 const item = {
-                    id: btn.dataset.id, // ID único do jogo
-                    cartId: Date.now(), // ID único para o carrinho (permite ter o mesmo jogo com licenças diferentes)
+                    id: btn.dataset.id,
+                    cartId: Date.now(),
                     title: btn.dataset.title,
                     imageSrc: btn.dataset.img,
-                    licenseType: selectedOption.value, // 'pessoal', 'escola', 'ambos'
-                    licenseLabel: selectedOption.text.split(' (')[0], // Texto bonito para exibir
+                    licenseType: selectedOption.value,
+                    licenseLabel: selectedOption.text.split(' (')[0],
                     price: parseFloat(selectedOption.dataset.price)
                 };
 
@@ -240,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 5. BOTÃO COMPARTILHAR
+    // 6. BOTÃO COMPARTILHAR
     document.addEventListener('click', (e) => {
         const shareBtn = e.target.closest('#share-button'); 
         if (shareBtn) {
@@ -251,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // 6. CARRINHO (Página)
+    // 7. CARRINHO
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
@@ -285,7 +311,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.reload();
         };
 
-        // Checkout WhatsApp Formatado
         const checkoutBtn = document.querySelector('.checkout-btn');
         if(checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
@@ -306,7 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Filtros de Categoria
+    // Filtros
     const categoryBtns = document.querySelectorAll('.category-btn');
     if(categoryBtns.length > 0) {
         categoryBtns.forEach(btn => {
