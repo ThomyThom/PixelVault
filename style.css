@@ -461,7 +461,7 @@ body {
     padding: 2px 8px;
 }
 
-/* --- Elementos de "Como Trabalhamos" (Neon & Vidro) --- */
+/* --- TIMELINE FIX (CORREÇÃO DE SOBREPOSIÇÃO) --- */
 .timeline-section { padding-bottom: 80px; }
 .timeline { position: relative; max-width: 800px; margin: 0 auto; }
 
@@ -470,6 +470,7 @@ body {
     width: 4px; background: linear-gradient(180deg, var(--primary-color) 0%, rgba(0,255,255,0.1) 100%);
     top: 0; bottom: 0; left: 50%; margin-left: -2px;
     box-shadow: 0 0 15px var(--primary-color);
+    z-index: 0; /* CORREÇÃO: Garante que a linha fique atrás */
 }
 
 .timeline-item { padding: 10px 40px; position: relative; background-color: inherit; width: 50%; }
@@ -479,10 +480,11 @@ body {
 .timeline-icon {
     position: absolute; width: 50px; height: 50px;
     right: -25px;
-    background: #000 !important;
+    background-color: var(--bg-color) !important; /* CORREÇÃO: Fundo sólido para cobrir a linha */
     border: 3px solid var(--primary-color);
     top: 50%; transform: translateY(-50%);
-    border-radius: 50%; z-index: 1;
+    border-radius: 50%; 
+    z-index: 2; /* CORREÇÃO: Garante que o ícone fique na frente */
     display: flex; justify-content: center; align-items: center;
     box-shadow: 0 0 15px var(--primary-color), inset 0 0 10px var(--primary-color);
     animation: pulse-neon 2s infinite;
@@ -504,6 +506,7 @@ body {
     border-radius: 6px;
     transform-style: preserve-3d;
     transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    z-index: 1;
 }
 
 .timeline-content:hover {
