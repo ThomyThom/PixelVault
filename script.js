@@ -11,12 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // MÓDULO 1: FUNCIONALIDADES GLOBAIS (Compartilhar, Header)
     // ============================================================
 
-    // 1.1 BOTÃO DE COMPARTILHAR (RESTABELECIDO)
-    // Usamos um ouvinte no documento para garantir que o clique seja capturado
+    // 1.1 BOTÃO DE COMPARTILHAR
     document.addEventListener('click', (e) => {
-        // Verifica se clicou no botão ou em qualquer elemento dentro dele (ícone, texto)
         const shareBtn = e.target.closest('#share-button'); 
-        
         if (shareBtn) {
             e.preventDefault();
             const text = "Pixel Vault: A loja de jogos oficial da galera. Confere aí: " + window.location.origin;
@@ -25,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // 1.2 Observador de Rodapé (Para o botão subir e não tapar o Discord)
+    // 1.2 Observador de Rodapé
     const footerElement = document.querySelector('.site-footer-bottom');
     const shareButtonElement = document.getElementById('share-button');
     if (footerElement && shareButtonElement) {
@@ -61,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // 1.4 Injeção do Header (Se necessário)
+    // 1.4 Injeção do Header (ÍCONE ATUALIZADO AQUI)
     const headerEl = document.querySelector('.site-header');
     if (headerEl && headerEl.innerHTML.trim() === '') {
         headerEl.innerHTML = `
@@ -83,7 +80,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="header-actions">
                     <a href="carrinho.html" class="cart-icon" aria-label="Carrinho">
                         <span class="cart-count" id="cart-count">0</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
                     </a>
                     <a href="login.html" id="user-profile-icon" class="user-icon" aria-label="Perfil">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -167,16 +168,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // MÓDULO 2: AUTENTICAÇÃO (Login/Registro)
+    // MÓDULO 2: AUTENTICAÇÃO
     // ============================================================
-    // Isolado para rodar apenas nas páginas de formulário
     (function initAuthSystem() {
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
 
-        if (!loginForm && !registerForm) return; // Sai se não estiver na página de login
+        if (!loginForm && !registerForm) return;
 
-        // Toggle Login/Register
         const showRegisterBtn = document.getElementById('show-register');
         const showLoginBtn = document.getElementById('show-login');
         if (showRegisterBtn) {
@@ -194,7 +193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Login Submit
         if (loginForm) {
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -226,7 +224,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Register Submit
         if (registerForm) {
             registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -304,18 +301,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão.</p>';
         }
 
-        // Adicionar ao Carrinho (Event Delegation)
+        // Event Delegation (Adicionar ao Carrinho e Info)
         gameGrid.addEventListener('click', (e) => {
             const btn = e.target.closest('.add-cart-icon-btn');
             
-            // Modal de Preços
             if (e.target.classList.contains('price-info-link')) {
                 e.preventDefault();
                 openPriceModal();
                 return;
             }
             
-            // Adicionar Item
             if (btn) {
                 const card = btn.closest('.game-card');
                 if(card.classList.contains('locked')) return;
@@ -325,7 +320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 const item = {
                     id: btn.dataset.id,
-                    cartId: Date.now(), // ID único para o carrinho
+                    cartId: Date.now(),
                     title: btn.dataset.title,
                     imageSrc: btn.dataset.img,
                     licenseType: selectedOption.value,
@@ -349,6 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.className = `game-card animate-on-scroll ${isLocked ? 'locked' : ''}`;
             card.dataset.category = game.categories ? game.categories.join(' ') : '';
             
+            // ÍCONE ATUALIZADO NO BOTÃO ADICIONAR
             card.innerHTML = `
                 ${isLocked ? '<div class="lock-overlay"><span class="lock-text">EM BREVE</span></div>' : ''}
                 <img src="${game.image}" alt="${game.title}">
@@ -369,7 +365,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 ${!isLocked ? `
                 <button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-img="${game.image}">
-                    ADICIONAR <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    ADICIONAR 
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
                 </button>
                 ` : ''}
             `;
@@ -411,7 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else { modal.classList.add('is-active'); }
     }
 
-    // Filtros de Categoria (AGORA FUNCIONANDO)
+    // Filtros
     const categoryBtns = document.querySelectorAll('.category-btn');
     if (categoryBtns.length > 0) {
         categoryBtns.forEach(btn => {
@@ -429,10 +430,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const cardCats = card.dataset.category || '';
                     if (cat === 'all' || cardCats.includes(cat)) {
                         card.style.display = 'flex';
-                        // Força a animação de entrada
-                        card.classList.remove('is-visible');
-                        void card.offsetWidth; // Trigger reflow
-                        card.classList.add('is-visible');
+                        setTimeout(() => card.classList.add('is-visible'), 10);
                         found = true;
                     } else {
                         card.style.display = 'none';
@@ -472,7 +470,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <span class="item-price">${formatPrice(item.price)}</span>
                             </div>
                         </div>
-                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})">🗑️</button>
+                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
                     </div>
                 `;
             });
