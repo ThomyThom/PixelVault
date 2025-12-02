@@ -135,12 +135,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- MÓDULO 4: CARREGAMENTO DE JOGOS (COM SKELETONS) ---
+    // --- MÓDULO 4: CARREGAMENTO DE JOGOS (COM DROP SEMANAL) ---
     async function loadGames() {
         const gameGrid = document.querySelector('.game-grid');
-        if (!gameGrid) return; // Não estamos na home
+        if (!gameGrid) return; 
 
-        // 1. Mostrar Skeletons
+        // Skeletons...
         gameGrid.innerHTML = '';
         for (let i = 0; i < 6; i++) {
             const skel = document.createElement('div');
@@ -150,89 +150,96 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            // 2. Fetch da API
             const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
             if(!res.ok) throw new Error('Falha ao buscar jogos');
             
             const games = await res.json();
-            
-            // 3. Renderizar Jogos Reais
-            gameGrid.innerHTML = ''; // Remove skeletons
+            gameGrid.innerHTML = ''; 
             
             if (games.length === 0) {
-                gameGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Nenhum jogo encontrado no cofre. (Execute /api/games/seed para popular)</p>';
+                gameGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">O cofre está vazio.</p>';
                 return;
             }
 
-            games.forEach((game, index) => {
-                const card = document.createElement('div');
-                card.className = 'game-card animate-on-scroll';
-                // Adiciona delay escalonado para efeito visual
-                card.style.transitionDelay = `${index * 50}ms`;
-                card.dataset.category = game.categories ? game.categories.join(' ') : '';
-                
-                card.innerHTML = `
-                    <img src="${game.image}" alt="${game.title}" loading="lazy">
-                    <div class="card-content">
-                        <h3>${game.title}</h3>
-                        <div class="price">R$ ${game.price.toFixed(2).replace('.', ',')}</div>
-                    </div>
-                    <button class="add-cart-icon-btn" aria-label="Adicionar ${game.title}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                `;
+            // Separação de Águas: Jogos Normais vs Drops
+            const availableGames = games.filter(g => !g.isComingSoon);
+            const dropGames = games.filter(g => g.isComingSoon);
 
-                // Evento de Adicionar ao Carrinho
-                const btn = card.querySelector('.add-cart-icon-btn');
-                btn.addEventListener('click', () => {
-                    let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
-                    if (cart.find(i => i.id === game._id)) {
-                        return showNotification('Já está no carrinho!', 'info');
-                    }
-                    cart.push({ id: game._id, title: game.title, price: game.price, imageSrc: game.image });
-                    localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
+            // 1. Renderiza Jogos Normais
+            renderGameList(availableGames, gameGrid);
+
+            // 2. Renderiza o Banner e os Drops (se houver)
+            if (dropGames.length > 0) {
+                // Injeta o Banner Glitch no meio da grid (ocupando toda a largura)
+                const banner = document.createElement('div');
+                banner.className = 'glitch-banner';
+                banner.style.gridColumn = '1 / -1'; // Ocupa toda a linha
+                banner.innerHTML = `<h3>/// PRÓXIMO DROP: SEXTA-FEIRA ///</h3><p style="font-size: 0.8rem; opacity: 0.8;">[DADOS CRIPTOGRAFADOS]</p>`;
+                gameGrid.appendChild(banner);
+
+                // Renderiza os Jogos Bloqueados
+                dropGames.forEach(game => {
+                    const card = document.createElement('div');
+                    card.className = 'game-card locked animate-on-scroll';
+                    card.dataset.category = 'drop'; // Categoria especial
                     
-                    const count = document.getElementById('cart-count');
-                    if(count) count.textContent = cart.length;
-                    showNotification(`${game.title} adicionado!`);
+                    card.innerHTML = `
+                        <div class="lock-overlay">
+                            <svg class="lock-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <span class="lock-text">CONFIDENCIAL</span>
+                        </div>
+                        <img src="${game.image}" alt="Confidencial" loading="lazy">
+                        <div class="card-content">
+                            <h3>${game.title}</h3>
+                            <div class="price" style="color: #666;">--,--</div>
+                        </div>
+                    `;
+                    gameGrid.appendChild(card);
+                    requestAnimationFrame(() => card.classList.add('is-visible'));
                 });
-
-                gameGrid.appendChild(card);
-                
-                // Força animação
-                requestAnimationFrame(() => card.classList.add('is-visible'));
-            });
+            }
 
         } catch (error) {
             console.error(error);
-            gameGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--error-color);">Erro ao conectar com o cofre.</p>';
+            gameGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--error-color);">Erro de conexão.</p>';
         }
     }
 
-    // Filtros de Categoria
-    const categoryBtns = document.querySelectorAll('.category-btn');
-    if(categoryBtns.length > 0) {
-        categoryBtns.forEach(btn => {
+    // Função auxiliar para renderizar jogos normais (para não repetir código)
+    function renderGameList(gamesList, container) {
+        gamesList.forEach((game, index) => {
+            const card = document.createElement('div');
+            card.className = 'game-card animate-on-scroll';
+            card.style.transitionDelay = `${index * 50}ms`;
+            card.dataset.category = game.categories ? game.categories.join(' ') : '';
+            
+            card.innerHTML = `
+                <img src="${game.image}" alt="${game.title}" loading="lazy">
+                <div class="card-content">
+                    <h3>${game.title}</h3>
+                    <div class="price">R$ ${game.price.toFixed(2).replace('.', ',')}</div>
+                </div>
+                <button class="add-cart-icon-btn" aria-label="Adicionar ${game.title}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            `;
+
+            const btn = card.querySelector('.add-cart-icon-btn');
             btn.addEventListener('click', () => {
-                document.querySelector('.category-btn.is-active').classList.remove('is-active');
-                btn.classList.add('is-active');
-                const cat = btn.dataset.category;
-                const cards = document.querySelectorAll('.game-card');
-                
-                cards.forEach(card => {
-                    const cardCats = card.dataset.category || '';
-                    if (cat === 'all' || cardCats.includes(cat)) {
-                        card.style.display = 'block';
-                        requestAnimationFrame(() => card.classList.add('is-visible'));
-                    } else {
-                        card.classList.remove('is-visible');
-                        card.style.display = 'none';
-                    }
-                });
+                let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+                if (cart.find(i => i.id === game._id)) return showNotification('Já está no carrinho!', 'info');
+                cart.push({ id: game._id, title: game.title, price: game.price, imageSrc: game.image });
+                localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
+                const count = document.getElementById('cart-count');
+                if(count) count.textContent = cart.length;
+                showNotification(`${game.title} adicionado!`);
             });
+
+            container.appendChild(card);
+            requestAnimationFrame(() => card.classList.add('is-visible'));
         });
     }
-
+    
     // --- MÓDULO 5: CARRINHO E CHECKOUT ---
     const cartItemsList = document.querySelector('.cart-items-list');
     if (cartItemsList) {

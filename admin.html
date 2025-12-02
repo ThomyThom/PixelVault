@@ -67,6 +67,10 @@
                         <input type="text" id="game-categories" placeholder="acao rpg school" required>
                         <small style="color: #aaa; margin-top: 5px; display: block;">Opções: acao, rpg, aventura, indie, school</small>
                     </div>
+                    <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="game-coming-soon" style="width: auto;">
+                        <label for="game-coming-soon" style="margin: 0; cursor: pointer;">Este é um Drop Secreto? (Em Breve)</label>
+                    </div>
                     <button type="submit" class="cta-button form-button">Lançar no Universo</button>
                 </form>
             </div>
@@ -136,7 +140,8 @@
                 title: inputs.title.value,
                 image: inputs.img.value,
                 price: parseFloat(inputs.price.value),
-                categories: document.getElementById('game-categories').value.split(' ').filter(c => c.trim() !== '')
+                categories: document.getElementById('game-categories').value.split(' ').filter(c => c.trim() !== ''),
+                isComingSoon: document.getElementById('game-coming-soon').checked // <--- NOVO CAMPO
             };
 
             try {
