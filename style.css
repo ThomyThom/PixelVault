@@ -326,7 +326,7 @@ body {
     padding: 12px 18px; border-radius: 30px; display: flex; gap: 10px;
     align-items: center; font-weight: bold; cursor: pointer; text-decoration: none;
     z-index: 5000; box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
-    transition: transform 0.3s, box-shadow 0.3s, bottom 0.4s ease;
+    transition: transform 0.3s, box-shadow 0.3s, bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .floating-share-btn:hover { transform: translateY(-3px); }
 .floating-share-btn.lift-up { bottom: 130px !important; }

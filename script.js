@@ -406,4 +406,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
     }
+
+    // DESVIO AUTOMÁTICO DO RODAPÉ
+    // Impede que o botão de compartilhar tampe o Discord
+    const footerElement = document.querySelector('.site-footer-bottom');
+    const shareButtonElement = document.getElementById('share-button');
+
+    if (footerElement && shareButtonElement) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Se o rodapé está visível, sobe o botão
+                    shareButtonElement.classList.add('lift-up');
+                } else {
+                    // Se o rodapé sumiu, desce o botão
+                    shareButtonElement.classList.remove('lift-up');
+                }
+            });
+        }, {
+            root: null, // Viewport
+            threshold: 0.1 // Ativa quando 10% do rodapé aparecer
+        });
+
+        observer.observe(footerElement);
+    }
 });
