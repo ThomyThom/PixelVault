@@ -1,13 +1,80 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- CONFIGURAÇÕES GLOBAIS ---
+    // --- CONFIGURAÇÕES ---
     const CONFIG = {
         apiBaseUrl: '/api',
         localStorageUserKey: 'pixelVaultUser',
         localStorageCartKey: 'pixelVaultCart'
     };
 
-    // --- FUNÇÕES UTILITÁRIAS (Globais) ---
+    // ============================================================
+    // MÓDULO 1: ATIVAÇÃO IMEDIATA (Eventos Globais)
+    // ============================================================
+    // Ativa funcionalidades críticas antes de qualquer carregamento de dados
+    
+    // 1.1 Botão de Compartilhar (Global)
+    document.addEventListener('click', (e) => {
+        const shareBtn = e.target.closest('#share-button'); 
+        if (shareBtn) {
+            e.preventDefault();
+            const text = "Pixel Vault: A loja de jogos oficial da galera. Confere aí: " + window.location.origin;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+    });
+
+    // 1.2 Filtros de Categoria (Global)
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    if (categoryBtns.length > 0) {
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // UI Update
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                
+                const cat = btn.dataset.category;
+                const cards = document.querySelectorAll('.game-card');
+                
+                let found = false;
+                cards.forEach(card => {
+                    // Proteção para cards de esqueleto
+                    if (card.classList.contains('skeleton-card')) return;
+
+                    const cardCats = card.dataset.category || '';
+                    if (cat === 'all' || cardCats.includes(cat)) {
+                        card.style.display = 'flex';
+                        // Pequeno delay para animação suave
+                        setTimeout(() => card.classList.add('is-visible'), 10);
+                        found = true;
+                    } else {
+                        card.style.display = 'none';
+                        card.classList.remove('is-visible');
+                    }
+                });
+
+                // Mensagem de "Nenhum resultado"
+                const noResults = document.getElementById('no-results-message');
+                if (noResults) noResults.style.display = found ? 'none' : 'block';
+            });
+        });
+    }
+
+    // 1.3 Observador de Rodapé (Para subir o botão share)
+    const footerElement = document.querySelector('.site-footer-bottom');
+    const shareButtonElement = document.getElementById('share-button');
+    if (footerElement && shareButtonElement) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) shareButtonElement.classList.add('lift-up');
+                else shareButtonElement.classList.remove('lift-up');
+            });
+        }, { root: null, threshold: 0.1 });
+        observer.observe(footerElement);
+    }
+
+    // ============================================================
+    // MÓDULO 2: UTILITÁRIOS & HEADER
+    // ============================================================
     window.showNotification = function(message, type = 'success') {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -15,242 +82,133 @@ document.addEventListener('DOMContentLoaded', async () => {
         note.className = `notification ${type} show`;
         note.textContent = message;
         container.appendChild(note);
-        setTimeout(() => {
-            note.classList.remove('show');
-            setTimeout(() => note.remove(), 500);
-        }, 3000);
+        setTimeout(() => { note.classList.remove('show'); setTimeout(() => note.remove(), 500); }, 3000);
     };
 
     function formatPrice(value) {
         return `R$ ${value.toFixed(2).replace('.', ',')}`;
     }
 
-    // ============================================================
-    // MÓDULO 1: SISTEMA DE LOGIN E REGISTRO (Prioridade Máxima)
-    // ============================================================
-    (function initAuthSystem() {
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-
-        // Se não estamos na página de login, sai deste módulo
-        if (!loginForm && !registerForm) return;
-
-        console.log("Sistema de Autenticação Iniciado.");
-
-        // 1. Alternância entre Login e Registro
-        const showRegisterBtn = document.getElementById('show-register');
-        const showLoginBtn = document.getElementById('show-login');
-        const loginContainer = document.getElementById('login-form-container');
-        const registerContainer = document.getElementById('register-form-container');
-
-        if (showRegisterBtn && showLoginBtn) {
-            showRegisterBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                loginContainer.style.display = 'none';
-                registerContainer.style.display = 'block';
-            });
-
-            showLoginBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                registerContainer.style.display = 'none';
-                loginContainer.style.display = 'block';
-            });
-        }
-
-        // 2. Lógica de Login
-        if (loginForm) {
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = loginForm.querySelector('button');
-                const originalText = btn.textContent;
-                btn.textContent = 'Acessando...';
-                btn.disabled = true;
-
-                try {
-                    const res = await fetch(`${CONFIG.apiBaseUrl}/auth/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            email: document.getElementById('login-email').value,
-                            password: document.getElementById('login-password').value
-                        })
-                    });
-                    const data = await res.json();
-
-                    if (!res.ok) throw new Error(data.message || 'Falha ao entrar.');
-
-                    localStorage.setItem(CONFIG.localStorageUserKey, JSON.stringify(data.user));
-                    showNotification('Acesso Autorizado.', 'success');
-                    setTimeout(() => window.location.href = 'index.html', 1000);
-
-                } catch (err) {
-                    showNotification(err.message, 'error');
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                }
-            });
-        }
-
-        // 3. Lógica de Registro
-        if (registerForm) {
-            // Validação visual de senha em tempo real
-            const pwInput = document.getElementById('register-password');
-            if (pwInput) {
-                pwInput.addEventListener('input', (e) => {
-                    const v = e.target.value;
-                    const reqs = {
-                        len: document.getElementById('req-length'),
-                        low: document.getElementById('req-lowercase'),
-                        up:  document.getElementById('req-uppercase'),
-                        num: document.getElementById('req-number')
-                    };
-                    if(reqs.len) reqs.len.classList.toggle('valid', v.length >= 8);
-                    if(reqs.low) reqs.low.classList.toggle('valid', /[a-z]/.test(v));
-                    if(reqs.up)  reqs.up.classList.toggle('valid', /[A-Z]/.test(v));
-                    if(reqs.num) reqs.num.classList.toggle('valid', /[0-9]/.test(v));
-                });
-            }
-
-            registerForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const pw = document.getElementById('register-password').value;
-                const cpw = document.getElementById('confirm-password').value;
-                
-                if (pw !== cpw) return showNotification('Senhas não conferem.', 'error');
-
-                const btn = registerForm.querySelector('button');
-                const originalText = btn.textContent;
-                btn.textContent = 'Forjando Chave...';
-                btn.disabled = true;
-
-                const formData = {
-                    firstName: document.getElementById('register-firstName').value,
-                    lastName: document.getElementById('register-lastName').value,
-                    email: document.getElementById('register-email').value,
-                    password: pw,
-                    confirm_password: cpw,
-                    school: document.getElementById('school').value,
-                    grade: document.getElementById('grade').value,
-                    course: document.getElementById('course').value,
-                    phone: document.getElementById('phone').value,
-                    cpf: document.getElementById('cpf').value
-                };
-
-                try {
-                    const res = await fetch(`${CONFIG.apiBaseUrl}/auth/register`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
-                    });
-                    const data = await res.json();
-
-                    if (!res.ok) throw new Error(data.message || 'Erro no registro.');
-
-                    localStorage.setItem(CONFIG.localStorageUserKey, JSON.stringify(data.user));
-                    showNotification('Chave Criada com Sucesso!', 'success');
-                    setTimeout(() => window.location.href = 'index.html', 1500);
-
-                } catch (err) {
-                    showNotification(err.message, 'error');
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                }
-            });
-        }
-    })();
-
-    // ============================================================
-    // MÓDULO 2: INTERFACE DA LOJA (Header, Carrinho, Jogos)
-    // ============================================================
-    // Só executa se NÃO estivermos na página de login (para evitar erros)
-    if (!document.querySelector('.login-page-body')) {
-        
-        // Injeção do Header
-        const headerEl = document.querySelector('.site-header');
-        if (headerEl && headerEl.innerHTML.trim() === '') {
-            headerEl.innerHTML = `
-                <div class="container">
-                    <a href="index.html" class="logo">Pixel Vault</a>
-                    <div class="search-container">
-                        <input type="search" id="search-bar" placeholder="Buscar jogos...">
-                    </div>
-                    <nav class="main-nav">
-                        <ul id="main-menu">
-                            <li><a href="index.html#destaques">Destaques</a></li>
-                            <li><a href="index.html#categorias">Categorias</a></li>
-                            <li id="login-link"><a href="login.html">Entrar</a></li>
-                            <li class="user-nav" style="display: none;"><a href="#" id="user-name-link"></a></li>
-                            <li class="user-nav" style="display: none;"><a href="comotrabalhamos.html">Como Trabalhamos</a></li>
-                            <li class="user-nav" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
-                        </ul>
-                    </nav>
-                    <div class="header-actions">
-                        <a href="carrinho.html" class="cart-icon"><span class="cart-count" id="cart-count">0</span>🛒</a>
-                    </div>
-                    <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
+    // Injeta Header se necessário
+    const headerEl = document.querySelector('.site-header');
+    if (headerEl && headerEl.innerHTML.trim() === '') {
+        headerEl.innerHTML = `
+            <div class="container">
+                <a href="index.html" class="logo">Pixel Vault</a>
+                <div class="search-container">
+                    <input type="search" id="search-bar" placeholder="Buscar jogos...">
                 </div>
-            `;
-            initHeaderEvents();
+                <nav class="main-nav">
+                    <ul id="main-menu">
+                        <li><a href="index.html#destaques">Destaques</a></li>
+                        <li><a href="index.html#categorias">Categorias</a></li>
+                        <li id="login-link"><a href="login.html">Entrar</a></li>
+                        <li class="user-nav" style="display: none;"><a href="#" id="user-name-link"></a></li>
+                        <li class="user-nav" style="display: none;"><a href="comotrabalhamos.html">Como Trabalhamos</a></li>
+                        <li class="user-nav" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
+                    </ul>
+                </nav>
+                <div class="header-actions">
+                    <a href="carrinho.html" class="cart-icon"><span class="cart-count" id="cart-count">0</span>🛒</a>
+                </div>
+                <button class="mobile-menu-toggle"><span></span><span></span><span></span></button>
+            </div>
+        `;
+        initHeaderEvents();
+    }
+
+    function initHeaderEvents() {
+        // Mobile Toggle
+        const toggle = document.querySelector('.mobile-menu-toggle');
+        const nav = document.querySelector('.main-nav');
+        if (toggle && nav) {
+            toggle.addEventListener('click', () => nav.classList.toggle('is-active'));
         }
 
-        function initHeaderEvents() {
-            // Lógica de Sessão e Menu
-            const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
-            const loginLink = document.getElementById('login-link');
-            const userNavs = document.querySelectorAll('.user-nav');
+        // Auth Check
+        const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
+        const loginLink = document.getElementById('login-link');
+        const userNavs = document.querySelectorAll('.user-nav');
+        
+        if (user && user.firstName) {
+            if (loginLink) loginLink.style.display = 'none';
+            userNavs.forEach(el => el.style.display = 'block');
+            const nameLink = document.getElementById('user-name-link');
+            if (nameLink) nameLink.textContent = `Olá, ${user.firstName}`;
+        } else {
+            if (loginLink) loginLink.style.display = 'block';
+            userNavs.forEach(el => el.style.display = 'none');
+        }
+
+        // Logout
+        const logoutBtn = document.getElementById('logout-link');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem(CONFIG.localStorageUserKey);
+                window.location.reload();
+            });
+        }
+
+        // Search Logic
+        const searchBar = document.getElementById('search-bar');
+        if (searchBar) {
+            let timeout;
+            searchBar.addEventListener('input', (e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    const term = e.target.value.toLowerCase();
+                    const cards = document.querySelectorAll('.game-card');
+                    let found = false;
+                    cards.forEach(card => {
+                        if (card.classList.contains('skeleton-card')) return;
+                        const title = card.querySelector('h3').textContent.toLowerCase();
+                        if (title.includes(term)) {
+                            card.style.display = 'flex';
+                            card.classList.add('is-visible');
+                            found = true;
+                        } else {
+                            card.style.display = 'none';
+                            card.classList.remove('is-visible');
+                        }
+                    });
+                    const noResults = document.getElementById('no-results-message');
+                    if (noResults) noResults.style.display = found ? 'none' : 'block';
+                }, 300);
+            });
+        }
+        updateCartCount();
+    }
+
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+        const el = document.getElementById('cart-count');
+        if (el) el.textContent = cart.length;
+    }
+
+    // ============================================================
+    // MÓDULO 3: CARREGAMENTO DE JOGOS (Async)
+    // ============================================================
+    const gameGrid = document.querySelector('.game-grid');
+    if (gameGrid) {
+        try {
+            // Loading State
+            gameGrid.innerHTML = '<div class="loading-arsenal">ACESSANDO O COFRE...</div>';
             
-            if (user && user.firstName) {
-                if(loginLink) loginLink.style.display = 'none';
-                userNavs.forEach(el => el.style.display = 'block');
-                const nameLink = document.getElementById('user-name-link');
-                if(nameLink) nameLink.textContent = `Olá, ${user.firstName}`;
+            const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
+            if(!res.ok) throw new Error('Erro na API');
+            const games = await res.json();
+            
+            gameGrid.innerHTML = ''; // Clear loading
+
+            if (games.length === 0) {
+                gameGrid.innerHTML = '<p style="text-align: center; width: 100%;">Cofre vazio.</p>';
             } else {
-                if(loginLink) loginLink.style.display = 'block';
-                userNavs.forEach(el => el.style.display = 'none');
-            }
-
-            // Logout
-            const logoutBtn = document.getElementById('logout-link');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    localStorage.removeItem(CONFIG.localStorageUserKey);
-                    window.location.reload();
-                });
-            }
-
-            // Mobile Toggle
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            const nav = document.querySelector('.main-nav');
-            if (toggle && nav) {
-                toggle.addEventListener('click', () => nav.classList.toggle('is-active'));
-            }
-
-            // Carrinho Count
-            updateCartCount();
-        }
-
-        function updateCartCount() {
-            const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
-            const el = document.getElementById('cart-count');
-            if (el) el.textContent = cart.length;
-        }
-
-        // Carregar Jogos (Apenas se game-grid existir)
-        const gameGrid = document.querySelector('.game-grid');
-        if (gameGrid) {
-            try {
-                gameGrid.innerHTML = '<div class="loading-arsenal">ACESSANDO O COFRE...</div>';
-                const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
-                if(!res.ok) throw new Error('Erro na API');
-                const games = await res.json();
-                
-                gameGrid.innerHTML = '';
-                
-                // Lógica de Renderização (igual à anterior)
                 const availableGames = games.filter(g => !g.isComingSoon);
                 const dropGames = games.filter(g => g.isComingSoon);
+
                 renderGames(availableGames, gameGrid);
+
                 if(dropGames.length > 0) {
                     const banner = document.createElement('div');
                     banner.className = 'glitch-banner';
@@ -259,51 +217,62 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gameGrid.appendChild(banner);
                     renderGames(dropGames, gameGrid, true);
                 }
-            } catch (e) {
-                console.error(e);
-                gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão.</p>';
+            }
+        } catch (e) {
+            console.error(e);
+            gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão. Tente recarregar.</p>';
+        }
+
+        // Global Click Listener for Add to Cart (Works for all dynamic cards)
+        gameGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.add-cart-icon-btn');
+            
+            // Info Link
+            if (e.target.classList.contains('price-info-link')) {
+                e.preventDefault();
+                openPriceModal();
+                return;
             }
 
-            // Event Delegation para Adicionar ao Carrinho
-            gameGrid.addEventListener('click', (e) => {
-                const btn = e.target.closest('.add-cart-icon-btn');
-                if (e.target.classList.contains('price-info-link')) { e.preventDefault(); openPriceModal(); return; }
+            if (btn) {
+                const card = btn.closest('.game-card');
+                if(card.classList.contains('locked')) return;
+
+                const select = card.querySelector('.license-select');
+                const selectedOption = select.options[select.selectedIndex];
                 
-                if (btn) {
-                    const card = btn.closest('.game-card');
-                    if(card.classList.contains('locked')) return;
-                    const select = card.querySelector('.license-select');
-                    const selectedOption = select.options[select.selectedIndex];
-                    const item = {
-                        id: btn.dataset.id,
-                        cartId: Date.now(),
-                        title: btn.dataset.title,
-                        imageSrc: btn.dataset.img,
-                        licenseType: selectedOption.value,
-                        licenseLabel: selectedOption.text.split(' (')[0],
-                        price: parseFloat(selectedOption.dataset.price)
-                    };
-                    let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
-                    cart.push(item);
-                    localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
-                    updateCartCount();
-                    showNotification(`"${item.title}" adicionado!`);
-                }
-            });
-        }
+                const item = {
+                    id: btn.dataset.id,
+                    cartId: Date.now(),
+                    title: btn.dataset.title,
+                    imageSrc: btn.dataset.img,
+                    licenseType: selectedOption.value,
+                    licenseLabel: selectedOption.text.split(' (')[0],
+                    price: parseFloat(selectedOption.dataset.price)
+                };
+
+                let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+                cart.push(item);
+                localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
+                
+                updateCartCount();
+                showNotification(`"${item.title}" (${item.licenseLabel}) adicionado!`);
+            }
+        });
     }
 
-    // Funções auxiliares de renderização (mantidas para garantir funcionamento)
     function renderGames(list, container, isLocked = false) {
         list.forEach(game => {
             const card = document.createElement('div');
             card.className = `game-card animate-on-scroll ${isLocked ? 'locked' : ''}`;
             card.dataset.category = game.categories ? game.categories.join(' ') : '';
+            
             card.innerHTML = `
                 ${isLocked ? '<div class="lock-overlay"><span class="lock-text">EM BREVE</span></div>' : ''}
                 <img src="${game.image}" alt="${game.title}">
                 <div class="card-content">
                     <h3>${game.title}</h3>
+                    
                     ${!isLocked ? `
                     <select class="license-select">
                         <option value="pessoal" data-price="20">PC Pessoal (R$ 20)</option>
@@ -312,11 +281,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </select>
                     <a class="price-info-link">Por que esses valores?</a>
                     ` : ''}
+
                     <div class="price" id="price-${game._id}">${isLocked ? '???' : 'R$ 20,00'}</div>
                 </div>
-                ${!isLocked ? `<button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-img="${game.image}">ADICIONAR 🛒</button>` : ''}
+                
+                ${!isLocked ? `
+                <button class="add-cart-icon-btn" data-id="${game._id}" data-title="${game.title}" data-img="${game.image}">
+                    ADICIONAR <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                </button>
+                ` : ''}
             `;
             container.appendChild(card);
+
             if (!isLocked) {
                 const select = card.querySelector('.license-select');
                 const priceEl = card.querySelector(`#price-${game._id}`);
@@ -328,7 +304,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Modal de Preços
     function openPriceModal() {
         let modal = document.getElementById('price-modal');
         if (!modal) {
@@ -340,19 +315,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button class="modal-close-btn">&times;</button>
                     <h2 class="modal-title">Entenda os Valores</h2>
                     <ul class="price-rules">
-                        <li><strong>R$ 20,00 (Digital):</strong> Acesso padrão.</li>
-                        <li><strong>R$ 30,00 (Escola):</strong> Inclui taxa de mídia física (pendrive).</li>
-                        <li><strong>R$ 50,00 (Combo):</strong> Acesso total (Casa + Escola).</li>
+                        <li><strong>R$ 20,00 (Digital):</strong> Acesso apenas aos arquivos do jogo.</li>
+                        <li><strong>R$ 30,00 (Escola):</strong> Inclui taxa de mídia física (pendrive) e setup.</li>
+                        <li><strong>R$ 50,00 (Combo):</strong> Acesso total para ambas as plataformas.</li>
                     </ul>
                     <button class="cta-button modal-close-btn-action">Entendido</button>
                 </div>
             `;
             document.body.appendChild(modal);
-            modal.onclick = (e) => { if(e.target === modal || e.target.classList.contains('modal-close-btn') || e.target.classList.contains('modal-close-btn-action')) modal.remove(); };
-        } else { modal.classList.add('is-active'); }
+            modal.onclick = (e) => { if (e.target === modal || e.target.classList.contains('modal-close-btn') || e.target.classList.contains('modal-close-btn-action')) modal.remove(); };
+        } else {
+            modal.classList.add('is-active');
+        }
     }
 
-    // MÓDULO 3: PÁGINA DO CARRINHO
+    // ============================================================
+    // MÓDULO 4: CARRINHO (PÁGINA)
+    // ============================================================
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
@@ -360,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (cart.length === 0) {
             cartList.innerHTML = '<p class="empty-cart-msg">Seu carrinho está vazio.</p>';
-            if(totalEl) totalEl.textContent = 'R$ 0,00';
+            if (totalEl) totalEl.textContent = 'R$ 0,00';
         } else {
             let total = 0;
             cartList.innerHTML = '';
@@ -376,11 +355,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <span class="item-price">${formatPrice(item.price)}</span>
                             </div>
                         </div>
-                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})" aria-label="Remover">🗑️</button>
+                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
                     </div>
                 `;
             });
-            if(totalEl) totalEl.textContent = formatPrice(total);
+            if (totalEl) totalEl.textContent = formatPrice(total);
         }
 
         window.removeItem = function(cartId) {
@@ -395,39 +376,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
                 if (!user) return window.location.href = 'login.html';
                 
-                let msg = `Olá! Sou ${user.firstName} ${user.lastName}.\nComprando:\n`;
+                let msg = `Olá! Sou ${user.firstName} ${user.lastName} (${user.school}).\nGostaria de comprar:\n\n`;
                 let total = 0;
+                
                 cart.forEach(i => {
-                    msg += `🎮 ${i.title} [${i.licenseLabel}] - ${formatPrice(i.price)}\n`;
+                    msg += `🎮 ${i.title}\n   └ [${i.licenseLabel}] - ${formatPrice(i.price)}\n`;
                     total += i.price;
                 });
-                msg += `\nTotal: ${formatPrice(total)}`;
+                
+                msg += `\n💰 *Total: ${formatPrice(total)}*\n\nComo posso realizar o pagamento?`;
                 window.open(`https://wa.me/5511914521982?text=${encodeURIComponent(msg)}`, '_blank');
             });
         }
-    }
-
-    // DESVIO AUTOMÁTICO DO RODAPÉ
-    // Impede que o botão de compartilhar tampe o Discord
-    const footerElement = document.querySelector('.site-footer-bottom');
-    const shareButtonElement = document.getElementById('share-button');
-
-    if (footerElement && shareButtonElement) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Se o rodapé está visível, sobe o botão
-                    shareButtonElement.classList.add('lift-up');
-                } else {
-                    // Se o rodapé sumiu, desce o botão
-                    shareButtonElement.classList.remove('lift-up');
-                }
-            });
-        }, {
-            root: null, // Viewport
-            threshold: 0.1 // Ativa quando 10% do rodapé aparecer
-        });
-
-        observer.observe(footerElement);
     }
 });
