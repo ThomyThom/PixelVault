@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Comando - Pixel Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos exclusivos do Admin */
+        .admin-grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; margin-top: 40px; }
+        .preview-card { position: sticky; top: 100px; }
+        .game-list-mini { margin-top: 40px; }
+        .mini-item { 
+            background: rgba(0,0,0,0.3); padding: 10px; margin-bottom: 10px; border-radius: 5px; 
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--card-border);
+        }
+        .mini-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 15px; }
+        .mini-info { flex-grow: 1; }
+        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        
+        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body class="login-page-body" style="justify-content: flex-start;">
+
+    <div id="notification-container"></div>
+    <div class="stars-bg"></div>
+    
+    <header class="site-header">
+        <div class="container">
+            <a href="index.html" class="logo">Pixel Vault <span style="font-size: 0.5em; color: var(--primary-color);">ADMIN</span></a>
+            <nav class="main-nav">
+                <ul><li><a href="index.html">Voltar para Loja</a></li></ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container" style="padding-top: 100px; width: 100%;">
+        
+        <div class="form-wrapper" id="key-wrapper" style="max-width: 100%; margin-bottom: 20px; padding: 20px;">
+            <div class="input-group" style="margin-bottom: 0; flex-direction: row; gap: 10px; align-items: center;">
+                <label style="margin: 0; white-space: nowrap;">Chave Mestre (Secret):</label>
+                <input type="password" id="admin-key" placeholder="Insira a chave definida na Vercel" style="max-width: 300px;">
+                <button class="cta-button" id="save-key-btn" style="padding: 10px 20px;">Salvar</button>
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <div class="form-wrapper" style="max-width: 100%;">
+                <h2 class="form-title" style="font-size: 1.5rem;">Adicionar Novo Jogo</h2>
+                <form id="add-game-form">
+                    <div class="input-group">
+                        <label>Título do Jogo</label>
+                        <input type="text" id="game-title" required>
+                    </div>
+                    <div class="input-group">
+                        <label>URL da Imagem (Capa)</label>
+                        <input type="url" id="game-image" placeholder="https://..." required>
+                    </div>
+                    <div class="input-group">
+                        <label>Preço (R$)</label>
+                        <input type="number" id="game-price" value="20.00" step="0.01" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Categorias (Separadas por espaço)</label>
+                        <input type="text" id="game-categories" placeholder="acao rpg school" required>
+                        <small style="color: #aaa; margin-top: 5px; display: block;">Opções: acao, rpg, aventura, indie, school</small>
+                    </div>
+                    <button type="submit" class="cta-button form-button">Lançar no Universo</button>
+                </form>
+            </div>
+
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">Preview em Tempo Real</h3>
+                <div class="game-card preview-card" id="preview-card" style="display: block; opacity: 1; max-width: 280px;">
+                    <img src="https://via.placeholder.com/280x350?text=Imagem+do+Jogo" alt="Preview" id="preview-img">
+                    <div class="card-content">
+                        <h3 id="preview-title">Título do Jogo</h3>
+                        <div class="price" id="preview-price">R$ 20,00</div>
+                    </div>
+                </div>
+
+                <div class="game-list-mini">
+                    <h3 style="color: var(--heading-color); margin-bottom: 15px; border-top: 1px solid var(--card-border); padding-top: 20px;">Jogos Ativos no Cofre</h3>
+                    <div id="active-games-list">
+                        <p>Carregando lista...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lógica do Admin Inline para isolamento
+        const API_URL = '/api/games';
+        const keyInput = document.getElementById('admin-key');
+
+        // 1. Gerenciamento da Chave
+        const savedKey = localStorage.getItem('pixelVaultAdminKey');
+        if(savedKey) keyInput.value = savedKey;
+
+        document.getElementById('save-key-btn').addEventListener('click', () => {
+            localStorage.setItem('pixelVaultAdminKey', keyInput.value);
+            alert('Chave salva no navegador!');
+            loadGames(); // Recarrega lista com a nova chave
+        });
+
+        // 2. Preview em Tempo Real
+        const inputs = {
+            title: document.getElementById('game-title'),
+            img: document.getElementById('game-image'),
+            price: document.getElementById('game-price')
+        };
+        const preview = {
+            title: document.getElementById('preview-title'),
+            img: document.getElementById('preview-img'),
+            price: document.getElementById('preview-price')
+        };
+
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', () => {
+                preview.title.textContent = inputs.title.value || 'Título do Jogo';
+                preview.price.textContent = `R$ ${parseFloat(inputs.price.value || 0).toFixed(2).replace('.', ',')}`;
+                preview.img.src = inputs.img.value || 'https://via.placeholder.com/280x350?text=Imagem+do+Jogo';
+            });
+        });
+
+        // 3. Adicionar Jogo
+        document.getElementById('add-game-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const secret = keyInput.value;
+            if(!secret) return alert('Insira a chave mestre!');
+
+            const data = {
+                title: inputs.title.value,
+                image: inputs.img.value,
+                price: parseFloat(inputs.price.value),
+                categories: document.getElementById('game-categories').value.split(' ').filter(c => c.trim() !== '')
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-admin-secret': secret 
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if(!res.ok) throw new Error((await res.json()).message);
+                
+                alert('Jogo Adicionado!');
+                document.getElementById('add-game-form').reset();
+                loadGames();
+            } catch (err) {
+                alert('Erro: ' + err.message);
+            }
+        });
+
+        // 4. Listar e Deletar Jogos
+        async function loadGames() {
+            const listContainer = document.getElementById('active-games-list');
+            try {
+                const res = await fetch(API_URL);
+                const games = await res.json();
+                
+                listContainer.innerHTML = '';
+                games.forEach(game => {
+                    const el = document.createElement('div');
+                    el.className = 'mini-item';
+                    el.innerHTML = `
+                        <div style="display:flex; align-items:center;">
+                            <img src="${game.image}">
+                            <div class="mini-info">
+                                <strong>${game.title}</strong>
+                                <br><span style="font-size:0.8rem; color:#aaa;">${game.categories.join(', ')}</span>
+                            </div>
+                        </div>
+                        <button class="btn-delete" onclick="deleteGame('${game._id}')">X</button>
+                    `;
+                    listContainer.appendChild(el);
+                });
+            } catch (err) {
+                listContainer.innerHTML = '<p style="color:red">Erro ao carregar lista.</p>';
+            }
+        }
+
+        // Função Global para Deletar
+        window.deleteGame = async (id) => {
+            if(!confirm('Tem certeza que deseja apagar este jogo?')) return;
+            const secret = keyInput.value;
+            
+            try {
+                const res = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'x-admin-secret': secret }
+                });
+                if(!res.ok) throw new Error((await res.json()).message);
+                loadGames();
+            } catch (err) {
+                alert('Erro ao deletar: ' + err.message);
+            }
+        };
+
+        // Inicializa
+        loadGames();
+    </script>
+</body>
+</html>
