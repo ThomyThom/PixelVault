@@ -283,8 +283,14 @@ body {
     padding: 12px 18px; border-radius: 30px; display: flex; gap: 10px;
     align-items: center; font-weight: bold; cursor: pointer; text-decoration: none;
     z-index: 5000; box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+    transition: transform 0.3s, box-shadow 0.3s, bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .floating-share-btn:hover { transform: translateY(-3px); }
+
+/* NOVA CLASSE: Ativada via JS quando o rodapé aparece */
+.floating-share-btn.lift-up {
+    bottom: 130px !important; /* Sobe o suficiente para limpar o rodapé */
+}
 
 /* Mobile */
 @media (max-width: 768px) {
@@ -311,6 +317,9 @@ body {
     
     .floating-share-btn span { display: none; }
     .floating-share-btn { padding: 15px; border-radius: 50%; bottom: 80px; }
+    .floating-share-btn.lift-up {
+        bottom: 160px !important;
+    }
     .cart-page-layout { grid-template-columns: 1fr; }
 }
 
