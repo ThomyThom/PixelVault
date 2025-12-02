@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(el) el.textContent = cart.length;
     }
 
-    // 4. MODAL DE PREÇOS (NOVO)
+    // 4. MODAL DE PREÇOS
     function openPriceModal() {
         let modal = document.getElementById('price-modal');
         if (!modal) {
@@ -144,7 +144,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             document.body.appendChild(modal);
             
-            // Eventos para fechar
             modal.querySelector('.modal-close-btn').onclick = () => modal.remove();
             modal.querySelector('.modal-close-btn-action').onclick = () => modal.remove();
             modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
@@ -153,12 +152,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 5. LOJA
+    // 5. LOJA (Lógica Corrigida de Duplicação)
     const gameGrid = document.querySelector('.game-grid');
     if (gameGrid) {
         try {
-            // ATUALIZAÇÃO AQUI: Usando a nova classe estilizada
             gameGrid.innerHTML = '<div class="loading-arsenal">ACESSANDO O COFRE...</div>';
+            
             const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
             if(!res.ok) throw new Error('Erro na API');
             const games = await res.json();
@@ -166,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             gameGrid.innerHTML = ''; 
 
             if(games.length === 0) {
-                gameGrid.innerHTML = '<p>Cofre vazio.</p>';
+                gameGrid.innerHTML = '<p style="text-align: center; width: 100%;">Cofre vazio.</p>';
             } else {
                 const availableGames = games.filter(g => !g.isComingSoon);
                 const dropGames = games.filter(g => g.isComingSoon);
@@ -184,8 +183,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (e) {
             console.error(e);
-            gameGrid.innerHTML = '<p>Erro de conexão. Tente recarregar.</p>';
+            gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão. Tente recarregar.</p>';
         }
+
+        // --- CORREÇÃO: EVENTO DE CLIQUE FORA DO LOOP ---
+        // Agora o listener é adicionado apenas UMA vez ao container principal
+        gameGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.add-cart-icon-btn');
+            
+            // Se clicou no link "Por que esses valores?"
+            if (e.target.classList.contains('price-info-link')) {
+                e.preventDefault();
+                openPriceModal();
+                return;
+            }
+
+            // Se clicou no botão de adicionar
+            if (btn) {
+                const card = btn.closest('.game-card');
+                // Proteção contra cards bloqueados (embora o botão não deva aparecer)
+                if(card.classList.contains('locked')) return;
+
+                const select = card.querySelector('.license-select');
+                const selectedOption = select.options[select.selectedIndex];
+                
+                const item = {
+                    id: btn.dataset.id,
+                    cartId: Date.now(), // ID único para o carrinho
+                    title: btn.dataset.title,
+                    imageSrc: btn.dataset.img,
+                    licenseType: selectedOption.value,
+                    licenseLabel: selectedOption.text.split(' (')[0],
+                    price: parseFloat(selectedOption.dataset.price)
+                };
+
+                let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
+                cart.push(item);
+                localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
+                
+                updateCartCount();
+                showNotification(`"${item.title}" (${item.licenseLabel}) adicionado!`);
+            }
+        });
     }
 
     function renderGames(list, container, isLocked = false) {
@@ -223,46 +262,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!isLocked) {
                 const select = card.querySelector('.license-select');
                 const priceEl = card.querySelector(`#price-${game._id}`);
-                const infoLink = card.querySelector('.price-info-link');
                 
-                // Abre o modal ao clicar no link
-                infoLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    openPriceModal();
-                });
-
                 select.addEventListener('change', (e) => {
                     const newPrice = parseFloat(e.target.options[e.target.selectedIndex].dataset.price);
                     priceEl.textContent = formatPrice(newPrice);
                     priceEl.style.color = '#fff';
                     setTimeout(() => priceEl.style.color = 'var(--primary-color)', 200);
                 });
-            }
-        });
-
-        container.addEventListener('click', (e) => {
-            const btn = e.target.closest('.add-cart-icon-btn');
-            if (btn) {
-                const card = btn.closest('.game-card');
-                const select = card.querySelector('.license-select');
-                const selectedOption = select.options[select.selectedIndex];
-                
-                const item = {
-                    id: btn.dataset.id,
-                    cartId: Date.now(),
-                    title: btn.dataset.title,
-                    imageSrc: btn.dataset.img,
-                    licenseType: selectedOption.value,
-                    licenseLabel: selectedOption.text.split(' (')[0],
-                    price: parseFloat(selectedOption.dataset.price)
-                };
-
-                let cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
-                cart.push(item);
-                localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(cart));
-                
-                updateCartCount();
-                showNotification(`"${item.title}" (${item.licenseLabel}) adicionado!`);
             }
         });
     }
@@ -278,14 +284,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // 7. CARRINHO
+    // 7. DESVIO AUTOMÁTICO DO RODAPÉ
+    const footerElement = document.querySelector('.site-footer-bottom');
+    const shareButtonElement = document.getElementById('share-button');
+
+    if (footerElement && shareButtonElement) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    shareButtonElement.classList.add('lift-up');
+                } else {
+                    shareButtonElement.classList.remove('lift-up');
+                }
+            });
+        }, { root: null, threshold: 0.1 });
+        observer.observe(footerElement);
+    }
+
+    // 8. CARRINHO (PÁGINA)
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
         const cart = JSON.parse(localStorage.getItem(CONFIG.localStorageCartKey)) || [];
         const totalEl = document.getElementById('cart-total');
         
         if (cart.length === 0) {
-            cartList.innerHTML = '<p>Seu carrinho está vazio.</p>';
+            cartList.innerHTML = '<p class="empty-cart-msg">Seu carrinho está vazio.</p>';
+            if(totalEl) totalEl.textContent = 'R$ 0,00';
         } else {
             let total = 0;
             cartList.innerHTML = '';
@@ -296,10 +320,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <img src="${item.imageSrc}" alt="${item.title}">
                         <div class="cart-item-info">
                             <h4>${item.title}</h4>
-                            <p style="font-size: 0.9rem; color: #aaa;">Licença: <strong style="color:var(--primary-color)">${item.licenseLabel}</strong></p>
-                            <p>${formatPrice(item.price)}</p>
+                            <div class="cart-item-meta">
+                                <span class="license-tag">${item.licenseLabel}</span>
+                                <span class="item-price">${formatPrice(item.price)}</span>
+                            </div>
                         </div>
-                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})">Remover</button>
+                        <button class="remove-item-btn" onclick="removeItem(${item.cartId})" aria-label="Remover">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
                     </div>
                 `;
             });
@@ -316,7 +344,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
                 const user = JSON.parse(localStorage.getItem(CONFIG.localStorageUserKey));
-                if(!user) return window.location.href = 'login.html';
+                if(!user) {
+                    showNotification('Faça login para finalizar.', 'info');
+                    setTimeout(() => window.location.href = 'login.html', 1500);
+                    return;
+                }
                 
                 let msg = `Olá! Sou ${user.firstName} ${user.lastName} (${user.school}).\nGostaria de comprar:\n\n`;
                 let total = 0;
@@ -354,29 +386,5 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
         });
-    }
-
-    // 8. DESVIO AUTOMÁTICO DO RODAPÉ (NOVO)
-    // Impede que o botão de compartilhar tampe o Discord
-    const footerElement = document.querySelector('.site-footer-bottom');
-    const shareButtonElement = document.getElementById('share-button');
-
-    if (footerElement && shareButtonElement) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Se o rodapé está visível, sobe o botão
-                    shareButtonElement.classList.add('lift-up');
-                } else {
-                    // Se o rodapé sumiu, desce o botão
-                    shareButtonElement.classList.remove('lift-up');
-                }
-            });
-        }, {
-            root: null, // Viewport
-            threshold: 0.1 // Ativa quando 10% do rodapé aparecer
-        });
-
-        observer.observe(footerElement);
     }
 });
