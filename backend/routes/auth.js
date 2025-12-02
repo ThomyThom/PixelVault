@@ -2,38 +2,48 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken'); // NOVO
 const User = require('../models/User');
+
+// SEGREDO DO JWT (Adicione JWT_SECRET nas variáveis da Vercel depois!)
+// Em dev usa 'segredo_local', em prod usa a variável de ambiente
+const JWT_SECRET = process.env.JWT_SECRET || 'segredo_super_secreto_local';
 
 // ROTA DE REGISTRO
 router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password, confirm_password, school, grade, course, phone, cpf } = req.body;
 
-        // Validações básicas
-        if (!firstName || !lastName || !email || !password || !school || !grade || !course || !phone || !cpf) {
-            return res.status(400).json({ message: 'Por favor, preencha todos os campos obrigatórios.' });
+        if (!firstName || !lastName || !email || !password || !school || !cpf) {
+            return res.status(400).json({ message: 'Preencha todos os campos.' });
         }
         if (password !== confirm_password) {
-            return res.status(400).json({ message: 'As senhas não coincidem.' });
+            return res.status(400).json({ message: 'Senhas não conferem.' });
         }
         
-        // Verifica duplicidade (Email, CPF ou Telefone)
-        const existingUser = await User.findOne({ $or: [{ email }, { cpf }, { phone }] });
+        const existingUser = await User.findOne({ $or: [{ email }, { cpf }] });
         if (existingUser) {
-            return res.status(400).json({ message: 'Usuário já cadastrado (Email, CPF ou Telefone em uso).' });
+            return res.status(400).json({ message: 'Usuário já existe.' });
         }
 
         const user = new User({ firstName, lastName, email, password, school, grade, course, phone, cpf });
         await user.save();
 
+        // GERA O TOKEN
+        const token = jwt.sign(
+            { id: user._id, firstName: user.firstName }, // Payload (o que vai dentro do token)
+            JWT_SECRET,
+            { expiresIn: '1h' } // Expira em 1 hora (Segurança para escola)
+        );
+
         res.status(201).json({ 
-            message: 'Registro realizado com sucesso!',
-            user: { firstName, lastName, school, grade, course }
+            message: 'Registro com sucesso!',
+            token, // Envia o token
+            user: { firstName: user.firstName, school: user.school } // Dados básicos para a UI
         });
 
     } catch (error) {
-        console.error("Erro no registro:", error);
-        res.status(500).json({ message: 'Erro interno no servidor.' });
+        res.status(500).json({ message: 'Erro no servidor.' });
     }
 });
 
@@ -41,35 +51,47 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Dados incompletos.' });
-        }
-
         const user = await User.findOne({ email });
-        if (!user) {
+        
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ message: 'Credenciais inválidas.' });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Credenciais inválidas.' });
-        }
+        // GERA O TOKEN
+        const token = jwt.sign(
+            { id: user._id, firstName: user.firstName },
+            JWT_SECRET,
+            { expiresIn: '2h' } // Login dura 2 horas
+        );
 
         res.status(200).json({ 
             message: 'Login realizado.',
-            user: {
-                firstName: user.firstName,
+            token, // O Token é a chave mestra agora
+            user: { 
+                firstName: user.firstName, 
                 lastName: user.lastName,
-                school: user.school,
-                grade: user.grade,
-                course: user.course
-            }
+                school: user.school 
+            } // Apenas dados não-críticos para o cabeçalho
         });
 
     } catch (error) {
-        console.error("Erro no login:", error);
-        res.status(500).json({ message: 'Erro interno no servidor.' });
+        res.status(500).json({ message: 'Erro no servidor.' });
+    }
+});
+
+// ROTA SEGURA: OBTER PERFIL (Dossiê Completo)
+// O Front-end chama isso enviando o Token para ver CPF/Email
+router.get('/me', async (req, res) => {
+    const token = req.headers['x-auth-token'];
+    
+    if (!token) return res.status(401).json({ message: 'Sem token, sem acesso.' });
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password'); // Traz tudo menos a senha
+        res.json(user);
+    } catch (error) {
+        res.status(401).json({ message: 'Token inválido.' });
     }
 });
 
