@@ -9,14 +9,11 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 
-// --- 1. SEGURANÇA MÁXIMA (Lista de Convidados) ---
-// Adiciona aqui TODOS os endereços que podem acessar o teu backend.
+// --- 1. SEGURANÇA MÁXIMA (Lista de Convidados Atualizada) ---
 const allowedOrigins = [
-    'http://localhost:3000',      // Para testes locais
-    'http://127.0.0.1:5500',      // Para testes locais (Live Server)
-    'https://pixelvaultshop.vercel.app/', // <--- O TEU DOMÍNIO PRINCIPAL
-    // Se o teu link for diferente, ADICIONE ELE AQUI EMBAIXO:
-    // 'https://seu-projeto-legal.vercel.app' 
+    'http://localhost:3000',          // Testes locais
+    'http://127.0.0.1:5500',          // Live Server
+    'https://pixelvaultshop.vercel.app' // <--- O TEU DOMÍNIO REAL AGORA ESTÁ AQUI
 ];
 
 app.use(cors({
