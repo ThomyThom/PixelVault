@@ -157,7 +157,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const gameGrid = document.querySelector('.game-grid');
     if (gameGrid) {
         try {
-            gameGrid.innerHTML = '<p style="text-align:center; width:100%;">Carregando arsenal...</p>';
+            // ATUALIZAÇÃO AQUI: Usando a nova classe estilizada
+            gameGrid.innerHTML = '<div class="loading-arsenal">ACESSANDO O COFRE...</div>';
             const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
             if(!res.ok) throw new Error('Erro na API');
             const games = await res.json();
