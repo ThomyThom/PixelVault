@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorageCartKey: 'pixelVaultCart'
     };
 
-    // --- MÓDULO 1: COMPONENTES COMPARTILHADOS (Header/Footer) ---
+    // --- MÓDULO 1: COMPONENTES COMPARTILHADOS (Header) ---
     async function loadSharedComponents() {
         const headerHTML = `
             <div class="container">
@@ -140,7 +140,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const gameGrid = document.querySelector('.game-grid');
         if (!gameGrid) return; 
 
-        // Skeletons...
         gameGrid.innerHTML = '';
         for (let i = 0; i < 6; i++) {
             const skel = document.createElement('div');
@@ -161,27 +160,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Separação de Águas: Jogos Normais vs Drops
             const availableGames = games.filter(g => !g.isComingSoon);
             const dropGames = games.filter(g => g.isComingSoon);
 
-            // 1. Renderiza Jogos Normais
             renderGameList(availableGames, gameGrid);
 
-            // 2. Renderiza o Banner e os Drops (se houver)
             if (dropGames.length > 0) {
-                // Injeta o Banner Glitch no meio da grid (ocupando toda a largura)
                 const banner = document.createElement('div');
                 banner.className = 'glitch-banner';
-                banner.style.gridColumn = '1 / -1'; // Ocupa toda a linha
+                banner.style.gridColumn = '1 / -1';
                 banner.innerHTML = `<h3>/// PRÓXIMO DROP: SEXTA-FEIRA ///</h3><p style="font-size: 0.8rem; opacity: 0.8;">[DADOS CRIPTOGRAFADOS]</p>`;
                 gameGrid.appendChild(banner);
 
-                // Renderiza os Jogos Bloqueados
                 dropGames.forEach(game => {
                     const card = document.createElement('div');
                     card.className = 'game-card locked animate-on-scroll';
-                    card.dataset.category = 'drop'; // Categoria especial
+                    card.dataset.category = 'drop';
                     
                     card.innerHTML = `
                         <div class="lock-overlay">
@@ -205,7 +199,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Função auxiliar para renderizar jogos normais (para não repetir código)
     function renderGameList(gamesList, container) {
         gamesList.forEach((game, index) => {
             const card = document.createElement('div');
@@ -239,7 +232,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             requestAnimationFrame(() => card.classList.add('is-visible'));
         });
     }
-    
+
+    // Filtros de Categoria
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    if(categoryBtns.length > 0) {
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector('.category-btn.is-active').classList.remove('is-active');
+                btn.classList.add('is-active');
+                const cat = btn.dataset.category;
+                const cards = document.querySelectorAll('.game-card');
+                
+                cards.forEach(card => {
+                    const cardCats = card.dataset.category || '';
+                    if (cat === 'all' || cardCats.includes(cat)) {
+                        card.style.display = 'block';
+                        requestAnimationFrame(() => card.classList.add('is-visible'));
+                    } else {
+                        card.classList.remove('is-visible');
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    }
+
     // --- MÓDULO 5: CARRINHO E CHECKOUT ---
     const cartItemsList = document.querySelector('.cart-items-list');
     if (cartItemsList) {
@@ -285,7 +302,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         renderCart();
 
-        // Checkout
         const checkoutBtn = document.querySelector('.checkout-btn');
         if(checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
@@ -355,7 +371,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('login-form-container').style.display = 'block';
         });
 
-        // Validação Senha
         const pwInput = document.getElementById('register-password');
         if(pwInput) {
             pwInput.addEventListener('input', (e) => {
@@ -410,11 +425,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- MÓDULO 7: EXTRAS GLOBAIS (Compartilhar & Animações) ---
+    // Botão de Compartilhar (Fixado)
+    const shareButton = document.getElementById('share-button');
+    if (shareButton) {
+        shareButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const siteUrl = window.location.origin;
+            const message = `E aí! Encontrei o Pixel Vault, uma loja de jogos de PC por R$20 pra galera da escola. Dá uma olhada: ${siteUrl}`;
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+    }
+
+    // Observador de Animação Global (ESSENCIAL PARA 'COMO TRABALHAMOS' APARECER)
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    // Observa todos os elementos animados que já existem no DOM
+    document.querySelectorAll('.animate-on-scroll, .animate-on-load').forEach(el => observer.observe(el));
+
     // --- INICIALIZAÇÃO ---
-    // 1. Injeta HTML Compartilhado
     await loadSharedComponents();
-    
-    // 2. Carrega Jogos (se estiver na home)
     loadGames();
 
 });
