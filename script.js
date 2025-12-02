@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <a class="price-info-link">Por que esses valores?</a>
                     ` : ''}
 
-                    <div class="price" id="price-${game._id}">R$ 20,00</div>
+                    <div class="price" id="price-${game._id}">${isLocked ? '???' : 'R$ 20,00'}</div>
                 </div>
                 
                 ${!isLocked ? `

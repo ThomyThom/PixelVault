@@ -7,10 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos exclusivos do Admin */
         .admin-grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; margin-top: 40px; }
-        .preview-card { position: sticky; top: 100px; }
-        .game-list-mini { margin-top: 40px; }
         .mini-item { 
             background: rgba(0,0,0,0.3); padding: 10px; margin-bottom: 10px; border-radius: 5px; 
             display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--card-border);
@@ -19,6 +16,14 @@
         .mini-info { flex-grow: 1; }
         .btn-delete { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         
+        /* Estilo para o Checkbox Customizado */
+        .checkbox-wrapper {
+            display: flex; align-items: center; gap: 10px; margin: 15px 0;
+            padding: 10px; background: rgba(0, 255, 255, 0.05); border-radius: 5px; border: 1px solid var(--card-border);
+        }
+        .checkbox-wrapper input { width: 20px; height: 20px; cursor: pointer; }
+        .checkbox-wrapper label { margin: 0; cursor: pointer; color: var(--primary-color); font-weight: bold; }
+
         @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -59,32 +64,21 @@
                         <input type="url" id="game-image" placeholder="https://..." required>
                     </div>
                     <div class="input-group">
-                        <label>Preço (R$)</label>
-                        <input type="number" id="game-price" value="20.00" step="0.01" required>
-                    </div>
-                    <div class="input-group">
                         <label>Categorias (Separadas por espaço)</label>
                         <input type="text" id="game-categories" placeholder="acao rpg school" required>
                         <small style="color: #aaa; margin-top: 5px; display: block;">Opções: acao, rpg, aventura, indie, school</small>
                     </div>
-                    <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="game-coming-soon" style="width: auto;">
-                        <label for="game-coming-soon" style="margin: 0; cursor: pointer;">Este é um Drop Secreto? (Em Breve)</label>
+
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="game-coming-soon">
+                        <label for="game-coming-soon">É um Drop Secreto? (Bloqueado)</label>
                     </div>
+
                     <button type="submit" class="cta-button form-button">Lançar no Universo</button>
                 </form>
             </div>
 
             <div>
-                <h3 style="color: var(--primary-color); margin-bottom: 15px;">Preview em Tempo Real</h3>
-                <div class="game-card preview-card" id="preview-card" style="display: block; opacity: 1; max-width: 280px;">
-                    <img src="https://via.placeholder.com/280x350?text=Imagem+do+Jogo" alt="Preview" id="preview-img">
-                    <div class="card-content">
-                        <h3 id="preview-title">Título do Jogo</h3>
-                        <div class="price" id="preview-price">R$ 20,00</div>
-                    </div>
-                </div>
-
                 <div class="game-list-mini">
                     <h3 style="color: var(--heading-color); margin-bottom: 15px; border-top: 1px solid var(--card-border); padding-top: 20px;">Jogos Ativos no Cofre</h3>
                     <div id="active-games-list">
@@ -96,7 +90,6 @@
     </div>
 
     <script>
-        // Lógica do Admin Inline para isolamento
         const API_URL = '/api/games';
         const keyInput = document.getElementById('admin-key');
 
@@ -107,41 +100,22 @@
         document.getElementById('save-key-btn').addEventListener('click', () => {
             localStorage.setItem('pixelVaultAdminKey', keyInput.value);
             alert('Chave salva no navegador!');
-            loadGames(); // Recarrega lista com a nova chave
+            loadGames();
         });
 
-        // 2. Preview em Tempo Real
-        const inputs = {
-            title: document.getElementById('game-title'),
-            img: document.getElementById('game-image'),
-            price: document.getElementById('game-price')
-        };
-        const preview = {
-            title: document.getElementById('preview-title'),
-            img: document.getElementById('preview-img'),
-            price: document.getElementById('preview-price')
-        };
-
-        Object.values(inputs).forEach(input => {
-            input.addEventListener('input', () => {
-                preview.title.textContent = inputs.title.value || 'Título do Jogo';
-                preview.price.textContent = `R$ ${parseFloat(inputs.price.value || 0).toFixed(2).replace('.', ',')}`;
-                preview.img.src = inputs.img.value || 'https://via.placeholder.com/280x350?text=Imagem+do+Jogo';
-            });
-        });
-
-        // 3. Adicionar Jogo
+        // 2. Adicionar Jogo
         document.getElementById('add-game-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const secret = keyInput.value;
             if(!secret) return alert('Insira a chave mestre!');
 
             const data = {
-                title: inputs.title.value,
-                image: inputs.img.value,
-                price: parseFloat(inputs.price.value),
+                title: document.getElementById('game-title').value,
+                image: document.getElementById('game-image').value,
+                price: 20.00, // Valor padrão fixo no banco, o front calcula os extras
                 categories: document.getElementById('game-categories').value.split(' ').filter(c => c.trim() !== ''),
-                isComingSoon: document.getElementById('game-coming-soon').checked // <--- NOVO CAMPO
+                // AQUI ESTÁ O SEGREDO: Enviando o status do checkbox
+                isComingSoon: document.getElementById('game-coming-soon').checked
             };
 
             try {
@@ -156,7 +130,7 @@
 
                 if(!res.ok) throw new Error((await res.json()).message);
                 
-                alert('Jogo Adicionado!');
+                alert('Jogo Adicionado com Sucesso!');
                 document.getElementById('add-game-form').reset();
                 loadGames();
             } catch (err) {
@@ -164,7 +138,7 @@
             }
         });
 
-        // 4. Listar e Deletar Jogos
+        // 3. Listar e Deletar
         async function loadGames() {
             const listContainer = document.getElementById('active-games-list');
             try {
@@ -175,11 +149,14 @@
                 games.forEach(game => {
                     const el = document.createElement('div');
                     el.className = 'mini-item';
+                    // Adiciona um ícone de cadeado se for secreto
+                    const lockIcon = game.isComingSoon ? '🔒 ' : '';
+                    
                     el.innerHTML = `
                         <div style="display:flex; align-items:center;">
                             <img src="${game.image}">
                             <div class="mini-info">
-                                <strong>${game.title}</strong>
+                                <strong>${lockIcon}${game.title}</strong>
                                 <br><span style="font-size:0.8rem; color:#aaa;">${game.categories.join(', ')}</span>
                             </div>
                         </div>
@@ -192,7 +169,6 @@
             }
         }
 
-        // Função Global para Deletar
         window.deleteGame = async (id) => {
             if(!confirm('Tem certeza que deseja apagar este jogo?')) return;
             const secret = keyInput.value;
@@ -209,7 +185,6 @@
             }
         };
 
-        // Inicializa
         loadGames();
     </script>
 </body>
