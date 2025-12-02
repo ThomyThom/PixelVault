@@ -719,3 +719,38 @@ bodyemail {
         text-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
     }
 }
+
+/* Adiciona isto ao teu style.css existente para melhorar performance */
+
+/* Aceleração de Hardware para animações suaves */
+.game-card, .notification, .feed-notification, .modal-container {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0); /* Hack para ativar GPU */
+}
+
+/* Scrollbar personalizada (Estilo Cyberpunk) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* Melhoria no botão flutuante para mobile */
+@media (max-width: 768px) {
+    .floating-share-btn {
+        bottom: 80px; /* Sobe para não ficar em cima do feed se ele existir */
+    }
+    /* Ajuste crítico para o menu mobile não ser tapado por notificações */
+    .site-header {
+        z-index: 5000;
+    }
+}
