@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .admin-grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; margin-top: 40px; }
+        
+        /* CORREÇÃO CRÍTICA: Força o preview a aparecer, ignorando o display:none do style.css */
+        .preview-card { 
+            display: flex !important; 
+            opacity: 1 !important; 
+            position: sticky; top: 100px;
+            pointer-events: none; /* Desativa cliques no preview */
+        }
+
         .mini-item { 
             background: rgba(0,0,0,0.3); padding: 10px; margin-bottom: 10px; border-radius: 5px; 
             display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--card-border);
@@ -16,7 +25,6 @@
         .mini-info { flex-grow: 1; }
         .btn-delete { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         
-        /* Estilo para o Checkbox Customizado */
         .checkbox-wrapper {
             display: flex; align-items: center; gap: 10px; margin: 15px 0;
             padding: 10px; background: rgba(0, 255, 255, 0.05); border-radius: 5px; border: 1px solid var(--card-border);
@@ -64,6 +72,11 @@
                         <input type="url" id="game-image" placeholder="https://..." required>
                     </div>
                     <div class="input-group">
+                        <label>Preço Base (R$)</label>
+                        <input type="number" id="game-price" value="20.00" step="0.01" readonly style="opacity: 0.7; cursor: not-allowed;">
+                        <small style="color:#aaa;">O sistema calcula 20/30/50 automaticamente.</small>
+                    </div>
+                    <div class="input-group">
                         <label>Categorias (Separadas por espaço)</label>
                         <input type="text" id="game-categories" placeholder="acao rpg school" required>
                         <small style="color: #aaa; margin-top: 5px; display: block;">Opções: acao, rpg, aventura, indie, school</small>
@@ -79,8 +92,37 @@
             </div>
 
             <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">Preview (Como será visto)</h3>
+                
+                <div class="game-card preview-card" id="preview-card">
+                    <div class="lock-overlay" id="preview-lock" style="display: none;">
+                        <span class="lock-text">EM BREVE</span>
+                    </div>
+
+                    <img src="https://via.placeholder.com/280x350?text=Capa" alt="Preview" id="preview-img">
+                    
+                    <div class="card-content">
+                        <h3 id="preview-title">Título do Jogo</h3>
+                        
+                        <div id="preview-controls">
+                            <select class="license-select">
+                                <option>PC Pessoal (R$ 20)</option>
+                                <option>PC Escola (R$ 30)</option>
+                                <option>Ambos (R$ 50)</option>
+                            </select>
+                            <a style="font-size: 0.8rem; color: #aaa; text-decoration: underline;">Por que esses valores?</a>
+                        </div>
+
+                        <div class="price" id="preview-price">R$ 20,00</div>
+                    </div>
+                    
+                    <button class="add-cart-icon-btn" id="preview-btn">
+                        ADICIONAR <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    </button>
+                </div>
+
                 <div class="game-list-mini">
-                    <h3 style="color: var(--heading-color); margin-bottom: 15px; border-top: 1px solid var(--card-border); padding-top: 20px;">Jogos Ativos no Cofre</h3>
+                    <h3 style="color: var(--heading-color); margin-bottom: 15px; border-top: 1px solid var(--card-border); padding-top: 20px;">Jogos Ativos</h3>
                     <div id="active-games-list">
                         <p>Carregando lista...</p>
                     </div>
@@ -93,29 +135,69 @@
         const API_URL = '/api/games';
         const keyInput = document.getElementById('admin-key');
 
-        // 1. Gerenciamento da Chave
+        // 1. Chave
         const savedKey = localStorage.getItem('pixelVaultAdminKey');
         if(savedKey) keyInput.value = savedKey;
 
         document.getElementById('save-key-btn').addEventListener('click', () => {
             localStorage.setItem('pixelVaultAdminKey', keyInput.value);
-            alert('Chave salva no navegador!');
+            alert('Chave salva!');
             loadGames();
         });
 
-        // 2. Adicionar Jogo
+        // 2. Preview Dinâmico
+        const inputs = {
+            title: document.getElementById('game-title'),
+            img: document.getElementById('game-image'),
+            isSecret: document.getElementById('game-coming-soon')
+        };
+        
+        const preview = {
+            card: document.getElementById('preview-card'),
+            title: document.getElementById('preview-title'),
+            img: document.getElementById('preview-img'),
+            price: document.getElementById('preview-price'),
+            lock: document.getElementById('preview-lock'),
+            controls: document.getElementById('preview-controls'),
+            btn: document.getElementById('preview-btn')
+        };
+
+        function updatePreview() {
+            preview.title.textContent = inputs.title.value || 'Título do Jogo';
+            preview.img.src = inputs.img.value || 'https://via.placeholder.com/280x350?text=Capa';
+            
+            if (inputs.isSecret.checked) {
+                preview.card.classList.add('locked');
+                preview.lock.style.display = 'flex';
+                preview.price.textContent = '???';
+                preview.controls.style.display = 'none';
+                preview.btn.style.display = 'none';
+            } else {
+                preview.card.classList.remove('locked');
+                preview.lock.style.display = 'none';
+                preview.price.textContent = 'R$ 20,00';
+                preview.controls.style.display = 'block';
+                preview.btn.style.display = 'flex';
+            }
+        }
+
+        // Listeners para atualizar preview
+        inputs.title.addEventListener('input', updatePreview);
+        inputs.img.addEventListener('input', updatePreview);
+        inputs.isSecret.addEventListener('change', updatePreview);
+
+        // 3. Adicionar Jogo
         document.getElementById('add-game-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const secret = keyInput.value;
             if(!secret) return alert('Insira a chave mestre!');
 
             const data = {
-                title: document.getElementById('game-title').value,
-                image: document.getElementById('game-image').value,
-                price: 20.00, // Valor padrão fixo no banco, o front calcula os extras
+                title: inputs.title.value,
+                image: inputs.img.value,
+                price: 20.00, // Valor fixo base
                 categories: document.getElementById('game-categories').value.split(' ').filter(c => c.trim() !== ''),
-                // AQUI ESTÁ O SEGREDO: Enviando o status do checkbox
-                isComingSoon: document.getElementById('game-coming-soon').checked
+                isComingSoon: inputs.isSecret.checked
             };
 
             try {
@@ -130,15 +212,16 @@
 
                 if(!res.ok) throw new Error((await res.json()).message);
                 
-                alert('Jogo Adicionado com Sucesso!');
+                alert('Jogo Adicionado!');
                 document.getElementById('add-game-form').reset();
+                updatePreview(); // Reseta preview
                 loadGames();
             } catch (err) {
                 alert('Erro: ' + err.message);
             }
         });
 
-        // 3. Listar e Deletar
+        // 4. Listar
         async function loadGames() {
             const listContainer = document.getElementById('active-games-list');
             try {
@@ -149,9 +232,7 @@
                 games.forEach(game => {
                     const el = document.createElement('div');
                     el.className = 'mini-item';
-                    // Adiciona um ícone de cadeado se for secreto
                     const lockIcon = game.isComingSoon ? '🔒 ' : '';
-                    
                     el.innerHTML = `
                         <div style="display:flex; align-items:center;">
                             <img src="${game.image}">
@@ -170,7 +251,7 @@
         }
 
         window.deleteGame = async (id) => {
-            if(!confirm('Tem certeza que deseja apagar este jogo?')) return;
+            if(!confirm('Deletar jogo?')) return;
             const secret = keyInput.value;
             
             try {
@@ -181,7 +262,7 @@
                 if(!res.ok) throw new Error((await res.json()).message);
                 loadGames();
             } catch (err) {
-                alert('Erro ao deletar: ' + err.message);
+                alert('Erro: ' + err.message);
             }
         };
 
