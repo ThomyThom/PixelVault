@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
+    // --- CONFIGURAÇÕES ---
     const CONFIG = {
         apiBaseUrl: '/api',
         storageUserKey: 'pixelVaultUser',
@@ -86,6 +87,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 1.5 Lógica do Header
     function initHeaderEvents() {
+        // --- CORREÇÃO: OCULTAR BARRA DE PESQUISA EM PÁGINAS INTERNAS ---
+        // Se não houver a grid de jogos (que só existe na Home), escondemos a busca.
+        if (!document.querySelector('.game-showcase')) {
+            const searchContainer = document.querySelector('.search-container');
+            if (searchContainer) {
+                searchContainer.style.display = 'none';
+            }
+        }
+
         const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
         const token = sessionStorage.getItem(CONFIG.storageTokenKey);
         const loginLink = document.getElementById('login-link');
@@ -137,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
 
-        // MÁSCARAS DE INPUT (RESTAURADAS)
+        // MÁSCARAS DE INPUT
         const phoneInput = document.getElementById('phone');
         if (phoneInput) {
             phoneInput.addEventListener('input', (e) => {
@@ -161,13 +171,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!loginForm && !registerForm) return;
 
-        // Toggle Login/Register
         const showRegisterBtn = document.getElementById('show-register');
         const showLoginBtn = document.getElementById('show-login');
         if(showRegisterBtn) showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('login-form-container').style.display='none'; document.getElementById('register-form-container').style.display='block'; });
         if(showLoginBtn) showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('register-form-container').style.display='none'; document.getElementById('login-form-container').style.display='block'; });
 
-        // Validação de Senha em Tempo Real
         const passwordInput = document.getElementById('register-password');
         if (passwordInput) {
             passwordInput.addEventListener('input', (e) => {
@@ -186,7 +194,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Login Submit
         if (loginForm) {
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -217,7 +224,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Register Submit
         if (registerForm) {
             registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -226,7 +232,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (pw !== cpw) return showNotification('Senhas não conferem.', 'error');
 
                 const btn = registerForm.querySelector('button');
-                const originalText = btn.textContent;
                 btn.textContent = 'Criando...'; btn.disabled = true;
 
                 const formData = {
@@ -258,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     setTimeout(() => window.location.href = 'index.html', 1500);
                 } catch (err) {
                     showNotification(err.message, 'error');
-                    btn.textContent = originalText; btn.disabled = false;
+                    btn.textContent = 'Registrar'; btn.disabled = false;
                 }
             });
         }
@@ -295,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             gameGrid.innerHTML = '<p style="text-align: center;">Erro de conexão.</p>';
         }
 
-        // Filtros e Pesquisa
         const categoryBtns = document.querySelectorAll('.category-btn');
         if (categoryBtns) {
             categoryBtns.forEach(btn => {
@@ -346,7 +350,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 300));
         }
 
-        // Adicionar ao Carrinho
         gameGrid.addEventListener('click', (e) => {
             const btn = e.target.closest('.add-cart-icon-btn');
             if (e.target.classList.contains('price-info-link')) { e.preventDefault(); openPriceModal(); return; }
@@ -409,7 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // MÓDULO 4: CARRINHO (PÁGINA)
+    // MÓDULO 4: CARRINHO
     // ============================================================
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
@@ -453,7 +456,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // MÓDULO 5: PÁGINA DE PERFIL (QG)
+    // MÓDULO 5: PERFIL
     // ============================================================
     if (document.querySelector('.profile-section')) {
         const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
@@ -466,35 +469,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch(`${CONFIG.apiBaseUrl}/auth/me`, { headers: { 'x-auth-token': token } });
                 const userData = await res.json();
                 
-                // Formatação de Nome
                 document.getElementById('profile-name').textContent = `${userData.firstName} ${userData.lastName}`;
                 document.getElementById('profile-avatar').textContent = userData.firstName.charAt(0).toUpperCase();
                 
-                // MAPA DE ESCOLAS (Corrige 'pentagono' para 'Colégio Pentágono')
-                const schoolMap = { 
-                    'pentagono': 'Colégio Pentágono', 
-                    'singular': 'Colégio Singular',
-                    'not-listed': 'Outra Instituição'
-                };
-                // Se não estiver no mapa, usa o texto original capitalizado
-                const schoolName = schoolMap[userData.school] || userData.school.charAt(0).toUpperCase() + userData.school.slice(1);
-                document.getElementById('profile-school').textContent = schoolName;
-
+                const schoolMap = { 'pentagono': 'Colégio Pentágono', 'singular': 'Colégio Singular', 'not-listed': 'Outra' };
+                document.getElementById('profile-school').textContent = schoolMap[userData.school] || userData.school;
+                
                 document.getElementById('profile-grade').textContent = userData.grade ? `${userData.grade}º Ano` : '-';
                 
-                // Formatação de Curso (Capitaliza a primeira letra: 'informatica' -> 'Informática')
-                const courseName = userData.course ? userData.course.charAt(0).toUpperCase() + userData.course.slice(1) : '-';
-                // Correção específica para acentos se necessário
-                const courseMap = {
-                    'informatica': 'Informática',
-                    'mecatronica': 'Mecatrônica',
-                    'midias': 'Mídias',
-                    'quimica': 'Química',
-                    'administracao': 'Administração',
-                    'academico': 'Acadêmico',
-                    'publicidade': 'Publicidade'
-                };
-                document.getElementById('profile-course').textContent = courseMap[userData.course] || courseName;
+                const courseMap = { 'informatica': 'Informática', 'academico': 'Acadêmico', 'mecatronica': 'Mecatrônica', 'midias': 'Mídias', 'quimica': 'Química', 'administracao': 'Administração' };
+                document.getElementById('profile-course').textContent = courseMap[userData.course] || userData.course;
                 
                 document.getElementById('profile-email').textContent = userData.email || '-';
                 document.getElementById('profile-phone').textContent = userData.phone || '-';
