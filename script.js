@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- CONFIGURAÇÕES ---
     const CONFIG = {
         apiBaseUrl: '/api',
         storageUserKey: 'pixelVaultUser',
-        storageTokenKey: 'pixelVaultToken', // Usando nomes consistentes
+        storageTokenKey: 'pixelVaultToken',
         localStorageCartKey: 'pixelVaultCart'
     };
 
@@ -12,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // MÓDULO 1: INTERFACE GLOBAL
     // ============================================================
 
-    // 1.1 Injeta Header (se necessário)
+    // 1.1 Injeta Header
     const headerEl = document.querySelector('.site-header');
     if (headerEl && headerEl.innerHTML.trim() === '') {
         headerEl.innerHTML = `
@@ -26,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <li id="login-link"><a href="login.html">Entrar</a></li>
                         <li class="user-nav" style="display: none;"><a href="#" id="user-name-link"></a></li>
                         <li class="user-nav" style="display: none;"><a href="comotrabalhamos.html">Como Trabalhamos</a></li>
-                        <li class="user-nav" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
+                        <li class="user-nav mobile-only" style="display: none;"><a href="#" id="logout-link">Sair</a></li>
                     </ul>
                 </nav>
                 <div class="header-actions">
@@ -122,7 +121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggle.addEventListener('click', () => { toggle.classList.toggle('is-active'); nav.classList.toggle('is-active'); });
         }
 
-        // Pesquisa (apenas visual, lógica está no módulo Loja)
         updateCartCount();
     }
 
@@ -133,11 +131,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // MÓDULO 2: AUTENTICAÇÃO (CORREÇÃO DE SENHA E LAYOUT)
+    // MÓDULO 2: AUTENTICAÇÃO
     // ============================================================
     (function initAuthSystem() {
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
+
+        // MÁSCARAS DE INPUT (RESTAURADAS)
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', (e) => {
+                let v = e.target.value.replace(/\D/g, '');
+                v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
+                v = v.replace(/(\d{5})(\d)/, '$1-$2');
+                e.target.value = v.slice(0, 15);
+            });
+        }
+
+        const cpfInput = document.getElementById('cpf');
+        if (cpfInput) {
+            cpfInput.addEventListener('input', (e) => {
+                let v = e.target.value.replace(/\D/g, '');
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = v.slice(0, 14);
+            });
+        }
 
         if (!loginForm && !registerForm) return;
 
@@ -147,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(showRegisterBtn) showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('login-form-container').style.display='none'; document.getElementById('register-form-container').style.display='block'; });
         if(showLoginBtn) showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('register-form-container').style.display='none'; document.getElementById('login-form-container').style.display='block'; });
 
-        // Validação de Senha em Tempo Real (FIXADO)
+        // Validação de Senha em Tempo Real
         const passwordInput = document.getElementById('register-password');
         if (passwordInput) {
             passwordInput.addEventListener('input', (e) => {
@@ -171,7 +191,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = loginForm.querySelector('button');
-                const originalText = btn.textContent;
                 btn.textContent = 'Autenticando...'; btn.disabled = true;
 
                 try {
@@ -193,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     setTimeout(() => window.location.href = 'index.html', 1000);
                 } catch (err) {
                     showNotification(err.message, 'error');
-                    btn.textContent = originalText; btn.disabled = false;
+                    btn.textContent = 'Entrar'; btn.disabled = false;
                 }
             });
         }
@@ -246,14 +265,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     })();
 
     // ============================================================
-    // MÓDULO 3: LOJA
+    // MÓDULO 3: LOJA E JOGOS
     // ============================================================
     const gameGrid = document.querySelector('.game-grid');
     if (gameGrid) {
         try {
             gameGrid.innerHTML = '<div class="loading-arsenal">ACESSANDO O COFRE...</div>';
             const res = await fetch(`${CONFIG.apiBaseUrl}/games`);
-            if(!res.ok) throw new Error('Erro API');
+            if(!res.ok) throw new Error('Erro na API');
             const games = await res.json();
             
             gameGrid.innerHTML = '';
@@ -390,7 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // MÓDULO 4: PÁGINA DO CARRINHO
+    // MÓDULO 4: CARRINHO (PÁGINA)
     // ============================================================
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {

@@ -270,6 +270,7 @@ body {
 .timeline-section { padding: 60px 0; }
 .timeline { position: relative; max-width: 800px; margin: 0 auto; }
 
+/* A LINHA (Atrás) */
 .timeline::after {
     content: ''; position: absolute; width: 4px; 
     background: linear-gradient(180deg, var(--primary-color) 0%, rgba(0,255,255,0.1) 100%);
@@ -280,11 +281,15 @@ body {
 .timeline-item:nth-child(odd) { left: 0; text-align: right; }
 .timeline-item:nth-child(even) { left: 50%; text-align: left; }
 
+/* O ÍCONE (Centralizado e Corrigido) */
 .timeline-icon {
     position: absolute; width: 50px; height: 50px;
-    right: -25px; top: 50%; transform: translateY(-50%);
-    background-color: var(--bg-color) !important; border: 3px solid var(--primary-color); border-radius: 50%;
-    z-index: 10; display: flex; justify-content: center; align-items: center;
+    right: -25px; 
+    top: 50%; transform: translateY(-50%);
+    background-color: var(--bg-color) !important; /* Cobre a linha */
+    border: 3px solid var(--primary-color); border-radius: 50%;
+    z-index: 10; /* Acima da linha */
+    display: flex; justify-content: center; align-items: center;
     box-shadow: 0 0 15px var(--primary-color);
 }
 .timeline-item:nth-child(even) .timeline-icon { left: -25px; }
@@ -350,16 +355,35 @@ body {
 .summary-details span { color: var(--primary-color); font-weight: bold; }
 
 /* =========================================
-   9. FORMULÁRIOS & EXTRAS
+   9. FORMULÁRIOS & EXTRAS (CORRIGIDOS)
    ========================================= */
 .login-page-body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
 .form-wrapper { background: var(--card-bg); padding: 40px; border-radius: 10px; border: 1px solid var(--card-border); max-width: 480px; width: 100%; position: relative; z-index: 10; }
 .logo--standalone { position: absolute; top: 30px; }
 .input-group { margin-bottom: 20px; display: flex; flex-direction: column; }
+
+/* CORREÇÃO DO AUTOCOMPLETE BRANCO DO CHROME */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+    -webkit-text-fill-color: #e0e0e0;
+    -webkit-box-shadow: 0 0 0px 1000px #0a192f inset; /* Cor do fundo do input aproximada */
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 .input-group input, .input-group select { padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border); color: #fff; border-radius: 5px; }
 .form-row { display: flex; gap: 15px; }
 
-/* Correção de Layout Mobile (Sobrenome) */
+/* CORREÇÃO DAS OPÇÕES DO SELECT EM BRANCO */
+select option {
+    background-color: #020a1a;
+    color: #e0e0e0;
+}
+
+/* CORREÇÃO DE LAYOUT MOBILE (Sobrenome Vazando) */
 @media (max-width: 480px) {
     .form-row { flex-direction: column; gap: 0; }
 }
