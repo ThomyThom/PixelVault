@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // MÓDULO 5: PERFIL
+    // MÓDULO 5: PÁGINA DE PERFIL (QG)
     // ============================================================
     if (document.querySelector('.profile-section')) {
         const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
@@ -466,11 +466,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch(`${CONFIG.apiBaseUrl}/auth/me`, { headers: { 'x-auth-token': token } });
                 const userData = await res.json();
                 
+                // Formatação de Nome
                 document.getElementById('profile-name').textContent = `${userData.firstName} ${userData.lastName}`;
                 document.getElementById('profile-avatar').textContent = userData.firstName.charAt(0).toUpperCase();
-                document.getElementById('profile-school').textContent = userData.school || '-';
-                document.getElementById('profile-grade').textContent = userData.grade || '-';
-                document.getElementById('profile-course').textContent = userData.course || '-';
+                
+                // MAPA DE ESCOLAS (Corrige 'pentagono' para 'Colégio Pentágono')
+                const schoolMap = { 
+                    'pentagono': 'Colégio Pentágono', 
+                    'singular': 'Colégio Singular',
+                    'not-listed': 'Outra Instituição'
+                };
+                // Se não estiver no mapa, usa o texto original capitalizado
+                const schoolName = schoolMap[userData.school] || userData.school.charAt(0).toUpperCase() + userData.school.slice(1);
+                document.getElementById('profile-school').textContent = schoolName;
+
+                document.getElementById('profile-grade').textContent = userData.grade ? `${userData.grade}º Ano` : '-';
+                
+                // Formatação de Curso (Capitaliza a primeira letra: 'informatica' -> 'Informática')
+                const courseName = userData.course ? userData.course.charAt(0).toUpperCase() + userData.course.slice(1) : '-';
+                // Correção específica para acentos se necessário
+                const courseMap = {
+                    'informatica': 'Informática',
+                    'mecatronica': 'Mecatrônica',
+                    'midias': 'Mídias',
+                    'quimica': 'Química',
+                    'administracao': 'Administração',
+                    'academico': 'Acadêmico',
+                    'publicidade': 'Publicidade'
+                };
+                document.getElementById('profile-course').textContent = courseMap[userData.course] || courseName;
+                
                 document.getElementById('profile-email').textContent = userData.email || '-';
                 document.getElementById('profile-phone').textContent = userData.phone || '-';
                 document.getElementById('profile-cpf').textContent = userData.cpf || '-';
