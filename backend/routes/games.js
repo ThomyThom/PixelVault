@@ -140,7 +140,7 @@ router.post('/seed', checkAdmin, async (req, res) => {
     }
 });
 
-// --- ROTA: SINCRONIZAR COM DISCORD (CORREÇÃO DE IMAGEM) ---
+// --- ROTA: SINCRONIZAR COM DISCORD (SANITIZAÇÃO EXTREMA) ---
 router.post('/sync-discord', checkAdmin, async (req, res) => {
     const webhookUrl = process.env.DISCORD_CATALOG_WEBHOOK;
 
@@ -149,41 +149,51 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
     }
 
     try {
+        // Busca jogos
         const games = await Game.find().sort({ title: 1 });
         
+        // PREPARAÇÃO E LIMPEZA DE DADOS
         const allEmbeds = games.map(game => {
-            let finalImage = game.image;
-            
-            // LÓGICA DE IMAGEM REFORÇADA
-            if (!finalImage) {
-                // Se não tiver imagem, usa um placeholder genérico
-                finalImage = "https://via.placeholder.com/300x400?text=Sem+Capa";
-            } else if (!finalImage.startsWith('http')) {
-                // Se NÃO começa com 'http', é um arquivo local do seu site.
-                // Removemos a barra inicial se houver para não duplicar (ex: //src)
-                const cleanPath = finalImage.startsWith('/') ? finalImage.slice(1) : finalImage;
-                // Montamos a URL completa: https://seu-site.com/src/img/jogo.jpg
-                finalImage = `https://pixelvaultshop.vercel.app/${cleanPath}`;
-            }
-            // Se já começar com http (ex: imagem da internet), deixa como está.
+            // 1. Limpeza de Texto (Trim remove espaços extras)
+            const cleanTitle = (game.title || "Título Desconhecido").trim();
+            const cleanCats = (game.categories || []).join(', ') || "Geral";
 
+            // 2. Limpeza de Imagem (A Mais Importante)
+            let imgUrl = (game.image || "").trim();
+            
+            // Se estiver vazia ou inválida, usa placeholder
+            if (!imgUrl || imgUrl.length < 5) {
+                imgUrl = "https://via.placeholder.com/300x400?text=Sem+Capa";
+            } 
+            // Se for caminho relativo, monta a URL completa
+            else if (!imgUrl.startsWith('http')) {
+                // Remove barras duplas ou invertidas
+                let cleanPath = imgUrl.replace(/\\/g, '/'); // Troca \ por /
+                if (cleanPath.startsWith('/')) cleanPath = cleanPath.slice(1);
+                
+                // Codifica espaços e caracteres especiais (ex: "God of War.jpg" -> "God%20of%20War.jpg")
+                // encodeURI ignora barras /, encodeURIComponent não. Aqui queremos encodeURI.
+                imgUrl = `https://pixelvaultshop.vercel.app/${encodeURI(cleanPath)}`;
+            }
+
+            // 3. Monta o Objeto
             return {
-                title: game.title || "Título Desconhecido",
+                title: cleanTitle.substring(0, 256), // Limite Discord
                 description: game.isComingSoon 
                     ? "🔒 **CONFIDENCIAL - EM BREVE**" 
-                    : `🎮 **Disponível no Cofre**\nCategorias: _${(game.categories || []).join(', ')}_`,
-                color: game.isComingSoon ? 2895667 : 5763719,
+                    : `🎮 **Disponível no Cofre**\nCategorias: _${cleanCats}_`,
+                color: game.isComingSoon ? 2829617 : 5763719, // Cores seguras
                 fields: [
                     { name: "PC Pessoal", value: "R$ 20,00", inline: true },
                     { name: "PC Escola", value: "R$ 30,00", inline: true },
                     { name: "Combo", value: "R$ 50,00", inline: true }
                 ],
-                thumbnail: { url: finalImage },
+                thumbnail: { url: imgUrl },
                 footer: { text: "Pixel Vault • Access Granted" }
             };
         });
 
-        // Envia em lotes de 4
+        // Envia em lotes de 4 (Segurança de Payload)
         const chunkSize = 4;
         let sentCount = 0;
         let errorLog = [];
@@ -204,26 +214,30 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
 
                 if (!response.ok) {
                     const errText = await response.text();
-                    console.error(`[ERRO DISCORD] Lote ${i}:`, errText);
-                    errorLog.push(`Lote ${i/chunkSize + 1} falhou: ${errText}`);
+                    // LOG DETALHADO PARA VOCÊ ACHAR O CULPADO
+                    console.error(`[ERRO DISCORD] Lote ${i/chunkSize + 1} falhou.`);
+                    console.error(`Resposta: ${errText}`);
+                    console.error(`Dados enviados:`, JSON.stringify(chunk, null, 2));
+                    
+                    errorLog.push(`Lote ${i/chunkSize + 1}: Discord recusou os dados.`);
                 } else {
                     sentCount += chunk.length;
                 }
 
-                await new Promise(r => setTimeout(r, 1000)); // Pausa de 1s
+                await new Promise(r => setTimeout(r, 1000));
 
             } catch (e) {
                 console.error(`[ERRO REDE] Lote ${i}:`, e);
-                errorLog.push(`Erro de conexão no lote ${i/chunkSize + 1}`);
+                errorLog.push(`Lote ${i/chunkSize + 1}: Erro de conexão.`);
             }
         }
 
         if (errorLog.length > 0) {
             res.status(207).json({ 
-                message: `Sincronização parcial. Enviados: ${sentCount}. Erros: ${errorLog.join(' | ')}` 
+                message: `Parcial: ${sentCount} enviados. Falhas detectadas nos lotes: ${errorLog.length}. Veja os logs da Vercel para identificar os jogos problemáticos.` 
             });
         } else {
-            res.json({ message: `Sucesso total! ${sentCount} jogos sincronizados.` });
+            res.json({ message: `Sucesso absoluto! ${sentCount} jogos sincronizados.` });
         }
 
     } catch (error) {
@@ -231,5 +245,7 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
         res.status(500).json({ message: 'Erro interno: ' + error.message });
     }
 });
+
 module.exports = router;
+
 
