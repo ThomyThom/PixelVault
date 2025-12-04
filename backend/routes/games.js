@@ -140,7 +140,7 @@ router.post('/seed', checkAdmin, async (req, res) => {
     }
 });
 
-// --- ROTA: SINCRONIZAR COM DISCORD (VERSÃO TURBO / BATCH) ---
+// --- ROTA: SINCRONIZAR COM DISCORD (MODO BLINDADO + LOTE SEGURO) ---
 router.post('/sync-discord', checkAdmin, async (req, res) => {
     const webhookUrl = process.env.DISCORD_CATALOG_WEBHOOK;
 
@@ -149,22 +149,27 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
     }
 
     try {
-        // 1. Busca todos os jogos
-        const games = await Game.find().sort({ title: 1 }); // Ordem alfabética
+        const games = await Game.find().sort({ title: 1 });
         
-        // 2. Prepara todos os Embeds na memória
+        // Prepara os Embeds
         const allEmbeds = games.map(game => {
-            // Correção de URL
             let finalImage = game.image;
-            if (!finalImage) finalImage = "https://via.placeholder.com/300x400?text=Sem+Capa";
-            else if (finalImage.startsWith('/')) finalImage = `https://pixelvaultshop.vercel.app${finalImage}`;
+            
+            // Tratamento de Imagem Robusto
+            if (!finalImage) {
+                finalImage = "https://via.placeholder.com/300x400?text=Sem+Capa";
+            } else if (finalImage.startsWith('/')) {
+                // Codifica a URL para evitar erros com espaços (ex: "jogo legal.jpg" -> "jogo%20legal.jpg")
+                const encodedPath = encodeURI(finalImage);
+                finalImage = `https://pixelvaultshop.vercel.app${encodedPath}`;
+            }
 
             return {
-                title: game.title,
+                title: game.title || "Título Desconhecido", // Proteção contra título vazio
                 description: game.isComingSoon 
                     ? "🔒 **CONFIDENCIAL - EM BREVE**" 
-                    : `🎮 **Disponível no Cofre**\nCategorias: _${game.categories.join(', ')}_`,
-                color: game.isComingSoon ? 2895667 : 5763719, // Cinza escuro ou Ciano
+                    : `🎮 **Disponível no Cofre**\nCategorias: _${(game.categories || []).join(', ')}_`,
+                color: game.isComingSoon ? 2895667 : 5763719,
                 fields: [
                     { name: "PC Pessoal", value: "R$ 20,00", inline: true },
                     { name: "PC Escola", value: "R$ 30,00", inline: true },
@@ -175,33 +180,54 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
             };
         });
 
-        // 3. Divide em lotes de 10 (Limite do Discord)
-        const chunkSize = 10;
+        // Envia em lotes menores (4 por vez) para evitar rejeição por tamanho
+        const chunkSize = 4;
         let sentCount = 0;
+        let errorLog = [];
 
         for (let i = 0; i < allEmbeds.length; i += chunkSize) {
             const chunk = allEmbeds.slice(i, i + chunkSize);
 
-            // Envia o lote inteiro (1 requisição = 10 jogos)
-            await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: "Pixel Vault Estoque",
-                    avatar_url: "https://cdn-icons-png.flaticon.com/512/6840/6840478.png",
-                    embeds: chunk // Manda o array de 10 embeds
-                })
-            });
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: "Pixel Vault Estoque",
+                        avatar_url: "https://cdn-icons-png.flaticon.com/512/6840/6840478.png",
+                        embeds: chunk
+                    })
+                });
 
-            sentCount += chunk.length;
-            // Pequena pausa de segurança entre Lotes (não entre jogos)
-            await new Promise(r => setTimeout(r, 500));
+                // AGORA VERIFICAMOS SE O DISCORD REJEITOU
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error(`[ERRO DISCORD] Lote ${i}:`, errText);
+                    errorLog.push(`Lote ${i/chunkSize + 1} falhou: ${errText}`);
+                } else {
+                    sentCount += chunk.length;
+                }
+
+                // Pausa de segurança
+                await new Promise(r => setTimeout(r, 1000));
+
+            } catch (e) {
+                console.error(`[ERRO REDE] Lote ${i}:`, e);
+                errorLog.push(`Erro de conexão no lote ${i/chunkSize + 1}`);
+            }
         }
 
-        res.json({ message: `Sincronização Turbo concluída! ${sentCount} jogos enviados em pacotes.` });
+        if (errorLog.length > 0) {
+            // Retorna erro parcial para você saber o que aconteceu
+            res.status(207).json({ 
+                message: `Sincronização parcial. Enviados: ${sentCount}. Erros: ${errorLog.join(' | ')}` 
+            });
+        } else {
+            res.json({ message: `Sucesso total! ${sentCount} jogos sincronizados.` });
+        }
 
     } catch (error) {
-        console.error("Erro fatal na sincronização:", error);
+        console.error("Erro fatal:", error);
         res.status(500).json({ message: 'Erro interno: ' + error.message });
     }
 });
