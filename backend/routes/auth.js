@@ -12,34 +12,35 @@ const JWT_SECRET = process.env.JWT_SECRET || 'segredo_local';
 const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
 const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
 const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
-
-// TEMPLATE 1: Recuperação de Senha (O que você configurou primeiro)
 const EMAILJS_TEMPLATE_ID_RESET = process.env.EMAILJS_TEMPLATE_ID; 
-
-// TEMPLATE 2: Solicitação de Escola (NOVO - Adicione na Vercel!)
 const EMAILJS_TEMPLATE_ID_SCHOOL = process.env.EMAILJS_TEMPLATE_ID_SCHOOL;
 
-// ROTA 1: ESQUECI A SENHA
+// ROTA 1: ESQUECI A SENHA (DEBUG ATIVADO)
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
+        console.log(`[DEBUG] Tentativa de reset para: ${email}`);
+
         const user = await User.findOne({ email });
 
         if (!user) {
+            console.log('[DEBUG] Usuário NÃO encontrado no banco.');
+            // Retorna 200 para segurança, mas loga o erro no servidor
             return res.status(200).json({ message: 'Se o email existir, as instruções foram enviadas.' });
         }
 
+        console.log('[DEBUG] Usuário encontrado. Gerando token...');
         const token = crypto.randomBytes(20).toString('hex');
         user.resetPasswordToken = token;
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
         await user.save();
 
-        // ATENÇÃO: Ajuste a URL para o seu domínio real
         const resetUrl = `https://pixelvaultshop.vercel.app/reset-password.html?token=${token}`;
+        console.log(`[DEBUG] Link gerado: ${resetUrl}`);
 
         const emailData = {
             service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_TEMPLATE_ID_RESET, // <--- USA O ID DE RESET
+            template_id: EMAILJS_TEMPLATE_ID_RESET,
             user_id: EMAILJS_PUBLIC_KEY,
             accessToken: EMAILJS_PRIVATE_KEY,
             template_params: {
@@ -49,17 +50,26 @@ router.post('/forgot-password', async (req, res) => {
             }
         };
 
-        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        // Envia e VERIFICA a resposta
+        console.log('[DEBUG] Enviando para EmailJS...');
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(emailData)
         });
 
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[ERRO CRÍTICO EMAILJS]', errorText);
+            throw new Error(`Falha no envio do email: ${errorText}`);
+        }
+
+        console.log('[DEBUG] Email enviado com sucesso!');
         res.status(200).json({ message: 'Email enviado.' });
 
     } catch (error) {
-        console.error('Erro no Forgot Password:', error);
-        res.status(500).json({ message: 'Erro ao processar solicitação.' });
+        console.error('[ERRO GERAL FORGOT PASSWORD]:', error);
+        res.status(500).json({ message: 'Erro ao processar solicitação. Verifique os logs.' });
     }
 });
 
@@ -94,10 +104,11 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
-// ROTA 3: SOLICITAR ESCOLA
+// ROTA 3: SOLICITAR ESCOLA (DEBUG ATIVADO)
 router.post('/request-school', async (req, res) => {
     try {
         const data = req.body;
+        console.log('[DEBUG] Nova solicitação de escola recebida.');
 
         const emailParams = {
             school_name: data.school_name,
@@ -113,18 +124,23 @@ router.post('/request-school', async (req, res) => {
             user_phone: data.user_phone
         };
 
-        // Envia para o EmailJS
-        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 service_id: EMAILJS_SERVICE_ID,
-                template_id: EMAILJS_TEMPLATE_ID_SCHOOL, // <--- USA O ID DA ESCOLA (CORRIGIDO)
+                template_id: EMAILJS_TEMPLATE_ID_SCHOOL,
                 user_id: EMAILJS_PUBLIC_KEY,
                 accessToken: EMAILJS_PRIVATE_KEY,
                 template_params: emailParams
             })
         });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[ERRO EMAILJS ESCOLA]', errorText);
+            throw new Error(`EmailJS recusou o envio: ${errorText}`);
+        }
 
         res.status(200).json({ message: 'Solicitação enviada com sucesso!' });
 
