@@ -140,7 +140,7 @@ router.post('/seed', checkAdmin, async (req, res) => {
     }
 });
 
-// --- ROTA: SINCRONIZAR COM DISCORD (MODO BLINDADO + LOTE SEGURO) ---
+// --- ROTA: SINCRONIZAR COM DISCORD (CORREÇÃO DE IMAGEM) ---
 router.post('/sync-discord', checkAdmin, async (req, res) => {
     const webhookUrl = process.env.DISCORD_CATALOG_WEBHOOK;
 
@@ -151,21 +151,24 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
     try {
         const games = await Game.find().sort({ title: 1 });
         
-        // Prepara os Embeds
         const allEmbeds = games.map(game => {
             let finalImage = game.image;
             
-            // Tratamento de Imagem Robusto
+            // LÓGICA DE IMAGEM REFORÇADA
             if (!finalImage) {
+                // Se não tiver imagem, usa um placeholder genérico
                 finalImage = "https://via.placeholder.com/300x400?text=Sem+Capa";
-            } else if (finalImage.startsWith('/')) {
-                // Codifica a URL para evitar erros com espaços (ex: "jogo legal.jpg" -> "jogo%20legal.jpg")
-                const encodedPath = encodeURI(finalImage);
-                finalImage = `https://pixelvaultshop.vercel.app${encodedPath}`;
+            } else if (!finalImage.startsWith('http')) {
+                // Se NÃO começa com 'http', é um arquivo local do seu site.
+                // Removemos a barra inicial se houver para não duplicar (ex: //src)
+                const cleanPath = finalImage.startsWith('/') ? finalImage.slice(1) : finalImage;
+                // Montamos a URL completa: https://seu-site.com/src/img/jogo.jpg
+                finalImage = `https://pixelvaultshop.vercel.app/${cleanPath}`;
             }
+            // Se já começar com http (ex: imagem da internet), deixa como está.
 
             return {
-                title: game.title || "Título Desconhecido", // Proteção contra título vazio
+                title: game.title || "Título Desconhecido",
                 description: game.isComingSoon 
                     ? "🔒 **CONFIDENCIAL - EM BREVE**" 
                     : `🎮 **Disponível no Cofre**\nCategorias: _${(game.categories || []).join(', ')}_`,
@@ -180,7 +183,7 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
             };
         });
 
-        // Envia em lotes menores (4 por vez) para evitar rejeição por tamanho
+        // Envia em lotes de 4
         const chunkSize = 4;
         let sentCount = 0;
         let errorLog = [];
@@ -199,7 +202,6 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
                     })
                 });
 
-                // AGORA VERIFICAMOS SE O DISCORD REJEITOU
                 if (!response.ok) {
                     const errText = await response.text();
                     console.error(`[ERRO DISCORD] Lote ${i}:`, errText);
@@ -208,8 +210,7 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
                     sentCount += chunk.length;
                 }
 
-                // Pausa de segurança
-                await new Promise(r => setTimeout(r, 1000));
+                await new Promise(r => setTimeout(r, 1000)); // Pausa de 1s
 
             } catch (e) {
                 console.error(`[ERRO REDE] Lote ${i}:`, e);
@@ -218,7 +219,6 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
         }
 
         if (errorLog.length > 0) {
-            // Retorna erro parcial para você saber o que aconteceu
             res.status(207).json({ 
                 message: `Sincronização parcial. Enviados: ${sentCount}. Erros: ${errorLog.join(' | ')}` 
             });
@@ -231,5 +231,5 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
         res.status(500).json({ message: 'Erro interno: ' + error.message });
     }
 });
-
 module.exports = router;
+
