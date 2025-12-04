@@ -362,6 +362,15 @@ body {
 .logo--standalone { position: absolute; top: 30px; }
 .input-group { margin-bottom: 20px; display: flex; flex-direction: column; }
 
+/* Links de Alternância entre Login e Registro */
+#show-register, #show-login {
+    color: var(--error-color);
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
 /* CORREÇÃO DO AUTOCOMPLETE BRANCO DO CHROME */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
