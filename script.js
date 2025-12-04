@@ -5,7 +5,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         apiBaseUrl: '/api',
         storageUserKey: 'pixelVaultUser',
         storageTokenKey: 'pixelVaultToken',
-        localStorageCartKey: 'pixelVaultCart'
+        localStorageCartKey: 'pixelVaultCart',
+        // COLOQUE SEU LINK DO DISCORD AQUI (Configure para "Nunca Expirar")
+        discordInviteLink: 'https://discord.gg/SEU_CONVITE_AQUI' 
     };
 
     // ============================================================
@@ -87,13 +89,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 1.5 Lógica do Header
     function initHeaderEvents() {
-        // --- CORREÇÃO: OCULTAR BARRA DE PESQUISA EM PÁGINAS INTERNAS ---
-        // Se não houver a grid de jogos (que só existe na Home), escondemos a busca.
         if (!document.querySelector('.game-showcase')) {
             const searchContainer = document.querySelector('.search-container');
-            if (searchContainer) {
-                searchContainer.style.display = 'none';
-            }
+            if (searchContainer) searchContainer.style.display = 'none';
         }
 
         const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
@@ -147,7 +145,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
 
-        // MÁSCARAS DE INPUT
         const phoneInput = document.getElementById('phone');
         if (phoneInput) {
             phoneInput.addEventListener('input', (e) => {
@@ -270,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     })();
 
     // ============================================================
-    // MÓDULO 3: LOJA E JOGOS
+    // 3. LOJA
     // ============================================================
     const gameGrid = document.querySelector('.game-grid');
     if (gameGrid) {
@@ -412,7 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // MÓDULO 4: CARRINHO
+    // 4. CARRINHO (CHECKOUT DISCORD)
     // ============================================================
     const cartList = document.querySelector('.cart-items-list');
     if (cartList) {
@@ -441,22 +438,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             localStorage.setItem(CONFIG.localStorageCartKey, JSON.stringify(newCart));
             window.location.reload();
         };
+
+        // LOGICA DE CHECKOUT DISCORD
         const checkoutBtn = document.querySelector('.checkout-btn');
         if (checkoutBtn) {
-            checkoutBtn.addEventListener('click', () => {
+            checkoutBtn.addEventListener('click', async () => {
                 const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
                 if (!user) { showNotification('Faça login para finalizar.', 'info'); setTimeout(() => window.location.href = 'login.html', 1500); return; }
-                let msg = `Olá! Sou ${user.firstName}.\nComprando:\n`;
+                
+                // 1. Monta o Pedido
+                let msg = `**NOVO PEDIDO - PIXEL VAULT**\n`;
+                msg += `👤 Cliente: ${user.firstName} ${user.lastName} (${user.email})\n`;
+                msg += `🏫 Escola: ${user.school}\n\n`;
+                msg += `🛒 **ITENS:**\n`;
                 let total = 0;
-                cart.forEach(i => { msg += `🎮 ${i.title} [${i.licenseLabel}] - ${formatPrice(i.price)}\n`; total += i.price; });
-                msg += `\n💰 *Total: ${formatPrice(total)}*`;
-                window.open(`https://wa.me/5511914521982?text=${encodeURIComponent(msg)}`, '_blank');
+                cart.forEach(i => { msg += `🔹 ${i.title} [${i.licenseLabel}] - ${formatPrice(i.price)}\n`; total += i.price; });
+                msg += `\n💰 **TOTAL: ${formatPrice(total)}**`;
+
+                // 2. Copia e Redireciona
+                try {
+                    await navigator.clipboard.writeText(msg);
+                    showNotification('Pedido copiado! Cole no Discord.', 'success');
+                    
+                    // Espera 2s para o usuário ler a notificação e abre o Discord
+                    setTimeout(() => {
+                        window.open(CONFIG.discordInviteLink, '_blank');
+                    }, 2000);
+
+                } catch (err) {
+                    console.error('Erro ao copiar:', err);
+                    showNotification('Erro ao copiar. Tire print do carrinho.', 'error');
+                    setTimeout(() => window.open(CONFIG.discordInviteLink, '_blank'), 2000);
+                }
             });
         }
     }
 
     // ============================================================
-    // MÓDULO 5: PERFIL
+    // 5. PERFIL
     // ============================================================
     if (document.querySelector('.profile-section')) {
         const user = JSON.parse(sessionStorage.getItem(CONFIG.storageUserKey));
@@ -474,7 +493,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 const schoolMap = { 'pentagono': 'Colégio Pentágono', 'singular': 'Colégio Singular', 'not-listed': 'Outra' };
                 document.getElementById('profile-school').textContent = schoolMap[userData.school] || userData.school;
-                
                 document.getElementById('profile-grade').textContent = userData.grade ? `${userData.grade}º Ano` : '-';
                 
                 const courseMap = { 'informatica': 'Informática', 'academico': 'Acadêmico', 'mecatronica': 'Mecatrônica', 'midias': 'Mídias', 'quimica': 'Química', 'administracao': 'Administração' };
