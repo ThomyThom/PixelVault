@@ -3,45 +3,43 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto'); // Nativo do Node.js
+const crypto = require('crypto');
 const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'segredo_local';
 
 // --- CONFIGURAÇÃO EMAILJS (Backend) ---
-// Adicione estas variáveis no painel da Vercel!
 const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID; 
 const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
-const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY; // Opcional, mas recomendado para segurança
+const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
-// ROTA 1: ESQUECI A SENHA (Gera Token e Envia Email)
+// TEMPLATE 1: Recuperação de Senha (O que você configurou primeiro)
+const EMAILJS_TEMPLATE_ID_RESET = process.env.EMAILJS_TEMPLATE_ID; 
+
+// TEMPLATE 2: Solicitação de Escola (NOVO - Adicione na Vercel!)
+const EMAILJS_TEMPLATE_ID_SCHOOL = process.env.EMAILJS_TEMPLATE_ID_SCHOOL;
+
+// ROTA 1: ESQUECI A SENHA
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
         const user = await User.findOne({ email });
 
         if (!user) {
-            // Por segurança, não dizemos que o email não existe (evita varredura de usuários)
             return res.status(200).json({ message: 'Se o email existir, as instruções foram enviadas.' });
         }
 
-        // 1. Gerar Token Aleatório
         const token = crypto.randomBytes(20).toString('hex');
-
-        // 2. Salvar Token e Validade (1 hora) no Banco
         user.resetPasswordToken = token;
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
         await user.save();
 
-        // 3. Link de Recuperação
-        // ATENÇÃO: Ajuste a URL base para o seu domínio real na Vercel
+        // ATENÇÃO: Ajuste a URL para o seu domínio real
         const resetUrl = `https://pixelvaultshop.vercel.app/reset-password.html?token=${token}`;
 
-        // 4. Enviar Email via EmailJS API (Server-Side)
         const emailData = {
             service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_TEMPLATE_ID,
+            template_id: EMAILJS_TEMPLATE_ID_RESET, // <--- USA O ID DE RESET
             user_id: EMAILJS_PUBLIC_KEY,
             accessToken: EMAILJS_PRIVATE_KEY,
             template_params: {
@@ -65,7 +63,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 
-// ROTA 2: REDEFINIR SENHA (Recebe Token e Nova Senha)
+// ROTA 2: REDEFINIR SENHA
 router.post('/reset-password', async (req, res) => {
     try {
         const { token, newPassword, confirmPassword } = req.body;
@@ -74,7 +72,6 @@ router.post('/reset-password', async (req, res) => {
             return res.status(400).json({ message: 'As senhas não coincidem.' });
         }
 
-        // Busca usuário com token válido e que não expirou
         const user = await User.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() }
@@ -84,9 +81,8 @@ router.post('/reset-password', async (req, res) => {
             return res.status(400).json({ message: 'Token inválido ou expirado.' });
         }
 
-        // Atualiza a senha (o pre-save hook do User.js vai fazer o hash)
         user.password = newPassword;
-        user.resetPasswordToken = undefined; // Limpa o token
+        user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         await user.save();
 
@@ -98,24 +94,20 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
-// --- ROTA 3: SOLICITAR ESCOLA (Blindada) ---
+// ROTA 3: SOLICITAR ESCOLA
 router.post('/request-school', async (req, res) => {
     try {
         const data = req.body;
 
-        // Mapeamento EXATO para o seu Template HTML
         const emailParams = {
             school_name: data.school_name,
             school_address: data.school_address,
             school_city: data.school_city,
-            school_state: data.school_state, // Agora enviado separado para caber no HTML
+            school_state: data.school_state,
             school_cep: data.school_cep,
             education_level: data.education_level || 'Não informado',
-            
-            // Converte o checkbox (true/false) para texto legível
             has_computers: data.has_computers ? 'Sim' : 'Não',
             computer_type: data.computer_type || 'Não especificado',
-            
             user_name: data.user_name,
             user_email: data.user_email,
             user_phone: data.user_phone
@@ -126,10 +118,10 @@ router.post('/request-school', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                service_id: process.env.EMAILJS_SERVICE_ID,
-                template_id: process.env.EMAILJS_TEMPLATE_ID, 
-                user_id: process.env.EMAILJS_PUBLIC_KEY,
-                accessToken: process.env.EMAILJS_PRIVATE_KEY,
+                service_id: EMAILJS_SERVICE_ID,
+                template_id: EMAILJS_TEMPLATE_ID_SCHOOL, // <--- USA O ID DA ESCOLA (CORRIGIDO)
+                user_id: EMAILJS_PUBLIC_KEY,
+                accessToken: EMAILJS_PRIVATE_KEY,
                 template_params: emailParams
             })
         });
@@ -142,8 +134,7 @@ router.post('/request-school', async (req, res) => {
     }
 });
 
-// ... (MANTENHA AS ROTAS DE REGISTER, LOGIN E ME ABAIXO IGUAIS AO ANTERIOR) ...
-// ROTA DE REGISTRO
+// ROTAS PADRÃO (Registro, Login, Me)
 router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password, confirm_password, school, grade, course, phone, cpf } = req.body;
@@ -177,7 +168,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// ROTA DE LOGIN
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
