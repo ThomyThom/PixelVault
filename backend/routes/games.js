@@ -140,4 +140,62 @@ router.post('/seed', checkAdmin, async (req, res) => {
     }
 });
 
+// --- ROTA: SINCRONIZAR COM DISCORD (NOVO) ---
+router.post('/sync-discord', checkAdmin, async (req, res) => {
+    const webhookUrl = process.env.DISCORD_CATALOG_WEBHOOK;
+
+    if (!webhookUrl) {
+        return res.status(500).json({ message: 'ERRO: Webhook do Discord não configurado na Vercel.' });
+    }
+
+    try {
+        // 1. Busca todos os jogos
+        const games = await Game.find().sort({ title: 1 }); // Ordem alfabética fica melhor no catálogo
+        let sentCount = 0;
+
+        // 2. Envia um por um (Loop com pausa para não tomar bloqueio do Discord)
+        for (const game of games) {
+            
+            // Pula jogos secretos/bloqueados se quiser (ou remove esse if para postar tudo)
+            // if (game.isComingSoon) continue; 
+
+            // Formata o Card (Embed) do Discord
+            const embed = {
+                title: game.title,
+                description: game.isComingSoon ? "🔒 **DROP SECRETO - EM BREVE**" : `🎮 **Disponível no Cofre**\n\nCategorias: _${game.categories.join(', ')}_`,
+                color: game.isComingSoon ? 0 : 5763719, // Preto para secreto, Ciano (Pixel Vault) para normal
+                fields: [
+                    { name: "PC Pessoal", value: "R$ 20,00", inline: true },
+                    { name: "PC Escola", value: "R$ 30,00", inline: true },
+                    { name: "Combo", value: "R$ 50,00", inline: true }
+                ],
+                thumbnail: { url: game.image }, // Imagem pequena ao lado
+                image: { url: game.image }, // Imagem grande (Opcional, pode remover se ficar muito grande)
+                footer: { text: "Pixel Vault • Access Granted" }
+            };
+
+            // Payload para o Webhook
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: "Pixel Vault Estoque",
+                    avatar_url: "https://cdn-icons-png.flaticon.com/512/6840/6840478.png", // Ícone de cofre ou seu logo
+                    embeds: [embed]
+                })
+            });
+
+            sentCount++;
+            // Pausa de 1 segundo entre envios para o Discord não bloquear (Rate Limit)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        res.json({ message: `Sucesso! ${sentCount} jogos enviados para o Discord.` });
+
+    } catch (error) {
+        console.error("Erro na sincronização:", error);
+        res.status(500).json({ message: 'Falha ao conectar com o Discord.' });
+    }
+});
+
 module.exports = router;
