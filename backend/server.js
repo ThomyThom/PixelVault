@@ -2,6 +2,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet'); // Segurança de Headers
+const rateLimit = require('express-rate-limit'); // Controle de tentativas
 
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
@@ -30,6 +32,16 @@ app.use(cors({
 }));
 
 app.use(express.json());
+// --- BLINDAGEM DE SEGURANÇA ---
+app.use(helmet()); // Protege headers HTTP
+
+// Limitador de tentativas (Evita Força Bruta)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100, // Limite de 100 requisições por IP
+    message: { message: 'Muitas tentativas. Tente novamente mais tarde.' }
+});
+app.use('/api/auth', limiter); // Aplica apenas nas rotas de autenticação
 
 // --- 2. CONEXÃO MONGODB ---
 let cached = global.mongoose;

@@ -5,6 +5,27 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
+const { z } = require('zod'); // Biblioteca de validação
+
+// Esquema de Validação (Regras do Jogo)
+const registerSchema = z.object({
+    firstName: z.string().min(2, "Nome muito curto"),
+    lastName: z.string().min(2, "Sobrenome muito curto"),
+    email: z.string().email("Email inválido"),
+    password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres")
+        .regex(/[a-z]/, "Senha precisa de uma letra minúscula")
+        .regex(/[A-Z]/, "Senha precisa de uma letra maiúscula")
+        .regex(/[0-9]/, "Senha precisa de um número"),
+    confirm_password: z.string(),
+    school: z.string().min(1, "Escola é obrigatória"),
+    grade: z.string(),
+    course: z.string(),
+    phone: z.string().min(10, "Telefone inválido"),
+    cpf: z.string().length(14, "CPF inválido (use pontuação)")
+}).refine((data) => data.password === data.confirm_password, {
+    message: "Senhas não conferem",
+    path: ["confirm_password"],
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'segredo_local';
 
@@ -155,11 +176,13 @@ router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password, confirm_password, school, grade, course, phone, cpf } = req.body;
 
-        if (!firstName || !lastName || !email || !password || !school || !grade || !course || !phone || !cpf) {
-            return res.status(400).json({ message: 'Por favor, preencha todos os campos obrigatórios.' });
-        }
-        if (password !== confirm_password) {
-            return res.status(400).json({ message: 'As senhas não coincidem.' });
+        // --- VALIDAÇÃO ZOD (AUTOMÁTICA) ---
+        try {
+            registerSchema.parse(req.body); // Se falhar, joga um erro automaticamente
+        } catch (zodError) {
+            // Pega o primeiro erro da lista e envia pro front
+            const errorMessage = zodError.errors[0].message;
+            return res.status(400).json({ message: errorMessage });
         }
         
         const emailExists = await User.findOne({ email });
