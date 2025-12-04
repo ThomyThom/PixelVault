@@ -44,6 +44,14 @@
             </div>
         </div>
 
+        <div class="form-wrapper" style="max-width: 100%; margin-bottom: 20px; padding: 20px; display: flex; gap: 20px; align-items: center; background: rgba(0, 255, 255, 0.05);">
+            <h3 style="margin: 0; color: var(--primary-color);">Comandos de Rede:</h3>
+            <button id="btn-sync-discord" class="cta-button" style="background: #5865F2; border-color: #5865F2;">
+                📡 Sincronizar Catálogo Discord
+            </button>
+            <small style="color: #aaa;">(Isso enviará todos os jogos do banco para o canal #catalogo)</small>
+        </div>
+
         <div class="admin-grid">
             <div class="form-wrapper" style="max-width: 100%;">
                 <h2 class="form-title" style="font-size: 1.5rem;">Adicionar Novo Jogo</h2>
@@ -232,6 +240,43 @@
         };
 
         loadGames();
+
+        // --- SINCRONIZAÇÃO DISCORD ---
+        document.getElementById('btn-sync-discord').addEventListener('click', async () => {
+            const secret = keyInput.value;
+            if (!secret) return alert('Precisa da Chave Mestre para acessar a rede neural do Discord.');
+
+            if (!confirm('ATENÇÃO: Isso vai postar TODOS os jogos novamente no canal do Discord.\nRecomendamos limpar o canal #catalogo manualmente antes de rodar.\n\nDeseja continuar?')) return;
+
+            const btn = document.getElementById('btn-sync-discord');
+            const originalText = btn.innerText;
+            btn.innerText = "Enviando dados... (Aguarde)";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/sync-discord`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-admin-secret': secret 
+                    }
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert(data.message);
+                } else {
+                    throw new Error(data.message);
+                }
+
+            } catch (err) {
+                alert('Erro na transmissão: ' + err.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>
