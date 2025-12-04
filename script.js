@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         storageTokenKey: 'pixelVaultToken',
         localStorageCartKey: 'pixelVaultCart',
         // COLOQUE SEU LINK DO DISCORD AQUI (Configure para "Nunca Expirar")
-        discordInviteLink: 'https://discord.gg/SEU_CONVITE_AQUI' 
+        discordInviteLink: 'https://discord.gg/dhrQdQYqea' 
     };
 
     // ============================================================
