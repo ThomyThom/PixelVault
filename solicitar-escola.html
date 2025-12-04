@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solicitar Escola - Pixel Vault</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-</head>
+    </head>
 <body class="login-page-body">
 
     <div id="notification-container"></div>
@@ -45,7 +42,8 @@
                         <label for="school-state">Estado</label>
                         <select id="school-state" name="school_state" required>
                             <option value="" disabled selected>UF</option>
-                            <option value="SP" selected>SP</option> <option value="RJ">RJ</option>
+                            <option value="SP" selected>SP</option>
+                            <option value="RJ">RJ</option>
                             <option value="MG">MG</option>
                             <option value="RS">RS</option>
                             <option value="PR">PR</option>
@@ -54,29 +52,21 @@
                         </select>
                     </div>
                 </div>
+                
                 <div class="input-group">
                     <label>Tipo de Ensino</label>
                     <div class="checkbox-group">
                         <label class="toggle-switch-label">
                             <span>Fundamental</span>
-                            <div>
-                                <input type="checkbox" name="education_level" value="Fundamental">
-                                <span class="switch-control"></span>
-                            </div>
+                            <div><input type="checkbox" name="education_level" value="Fundamental"><span class="switch-control"></span></div>
                         </label>
                         <label class="toggle-switch-label">
                             <span>Médio</span>
-                            <div>
-                                <input type="checkbox" name="education_level" value="Médio">
-                                <span class="switch-control"></span>
-                            </div>
+                            <div><input type="checkbox" name="education_level" value="Médio"><span class="switch-control"></span></div>
                         </label>
                         <label class="toggle-switch-label">
                             <span>Faculdade</span>
-                            <div>
-                                <input type="checkbox" name="education_level" value="Faculdade">
-                                <span class="switch-control"></span>
-                            </div>
+                            <div><input type="checkbox" name="education_level" value="Faculdade"><span class="switch-control"></span></div>
                         </label>
                     </div>
                 </div>
@@ -87,35 +77,23 @@
                 <div class="checkbox-group">
                     <label class="toggle-switch-label">
                         <span>Possui computadores para alunos</span>
-                        <div>
-                            <input type="checkbox" id="has-computers" name="has_computers">
-                            <span class="switch-control"></span>
-                        </div>
+                        <div><input type="checkbox" id="has-computers" name="has_computers"><span class="switch-control"></span></div>
                     </label>
                 </div>
-                <div class="input-group" id="computer-types-group" style="display: none;">
+                <div class="input-group" id="computer-types-group" style="display: none; margin-top: 15px;">
                     <label>Tipo de Computadores</label>
                     <div class="checkbox-group">
                         <label class="toggle-switch-label">
                             <span>Chromebook</span>
-                            <div>
-                                <input type="checkbox" name="computer_type" value="Chromebook">
-                                <span class="switch-control"></span>
-                            </div>
+                            <div><input type="checkbox" name="computer_type" value="Chromebook"><span class="switch-control"></span></div>
                         </label>
                         <label class="toggle-switch-label">
                             <span>Notebook Positivo (Governo)</span>
-                            <div>
-                                <input type="checkbox" name="computer_type" value="Positivo">
-                                <span class="switch-control"></span>
-                            </div>
+                            <div><input type="checkbox" name="computer_type" value="Positivo"><span class="switch-control"></span></div>
                         </label>
                         <label class="toggle-switch-label">
                             <span>Desktops</span>
-                            <div>
-                                <input type="checkbox" name="computer_type" value="Desktop">
-                                <span class="switch-control"></span>
-                            </div>
+                            <div><input type="checkbox" name="computer_type" value="Desktop"><span class="switch-control"></span></div>
                         </label>
                     </div>
                 </div>
@@ -142,19 +120,17 @@
     </div>
 
     <div class="form-wrapper" id="success-message-wrapper" style="display: none; text-align: center;">
-        <h1 class="form-title">Solicitação Enviada!</h1>
-        <p class="modal-message">Nossa equipe recebeu sua solicitação para adicionar um novo colégio. Agradecemos imensamente por nos ajudar a expandir o universo do Pixel Vault!</p>
-        <button class="cta-button" onclick="window.location.href='index.html'" style="margin-top: 20px;">Voltar ao Início</button>
+        <h1 class="form-title" style="color: var(--success-color);">Solicitação Enviada!</h1>
+        <p class="modal-message">Recebemos sua inteligência sobre a nova base. Nossa equipe de reconhecimento analisará os dados.</p>
+        <p class="modal-message">Você receberá um retorno sobre a situação do cadastro em breve.</p>
+        <button class="cta-button" onclick="window.location.href='index.html'" style="margin-top: 20px;">Voltar ao QG</button>
     </div>
     
     <script src="script.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializa EmailJS (SUBSTITUA PELAS SUAS CHAVES)
-            emailjs.init('G8yQrJsHnxmhrEoGu'); // Ex: 'user_xyz...'
-
-            // Lógica de mostrar/esconder tipos de computadores
+            // Lógica UI: Mostrar/Esconder Tipos de PC
             const hasComputersCheckbox = document.getElementById('has-computers');
             const computerTypesGroup = document.getElementById('computer-types-group');
             if (hasComputersCheckbox && computerTypesGroup) {
@@ -163,51 +139,79 @@
                 });
             }
 
-            // Máscara de CEP
+            // Máscaras de Input (CEP e Telefone)
             const schoolCepInput = document.getElementById('school-cep');
             if (schoolCepInput) {
                 schoolCepInput.addEventListener('input', (e) => {
-                    let value = e.target.value.replace(/\D/g, '');
-                    value = value.replace(/^(\d{5})(\d)/, '$1-$2');
-                    e.target.value = value.slice(0, 9);
+                    let v = e.target.value.replace(/\D/g, '');
+                    v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+                    e.target.value = v.slice(0, 9);
                 });
             }
-
-            // Máscara de Telefone
             const userPhoneInput = document.getElementById('user-phone');
             if (userPhoneInput) {
                 userPhoneInput.addEventListener('input', (e) => {
-                    let value = e.target.value.replace(/\D/g, '');
-                    value = value.replace(/^(\d{2})(\d)/, '($1) $2');
-                    value = value.replace(/(\d{5})(\d)/, '$1-$2');
-                    e.target.value = value.slice(0, 15);
+                    let v = e.target.value.replace(/\D/g, '');
+                    v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
+                    v = v.replace(/(\d{5})(\d)/, '$1-$2');
+                    e.target.value = v.slice(0, 15);
                 });
             }
 
-            // Envio do Formulário
+            // Envio do Formulário (Agora via Backend)
             const form = document.getElementById('school-request-form');
             if (form) {
-                form.addEventListener('submit', function(event) {
+                form.addEventListener('submit', async function(event) {
                     event.preventDefault();
                     
                     const btn = form.querySelector('button');
                     const originalText = btn.textContent;
-                    btn.textContent = 'Enviando...';
+                    btn.textContent = 'Transmitindo...';
                     btn.disabled = true;
 
-                    // Substitua 'default_service' e 'template_id' pelos seus IDs do EmailJS
-                    emailjs.sendForm('pixelvault_noreply', 'unifiedShool_request', this)
-                        .then(() => {
+                    // Coleta de dados (Incluindo Checkboxes Múltiplos)
+                    const getCheckedValues = (name) => {
+                        return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+                                    .map(el => el.value).join(', ');
+                    };
+
+                    const formData = {
+                        school_name: document.getElementById('school-name').value,
+                        school_address: document.getElementById('school-address').value,
+                        school_cep: document.getElementById('school-cep').value,
+                        school_city: document.getElementById('school-city').value,
+                        school_state: document.getElementById('school-state').value,
+                        education_level: getCheckedValues('education_level'),
+                        has_computers: document.getElementById('has-computers').checked,
+                        computer_type: getCheckedValues('computer_type'),
+                        user_name: document.getElementById('user-name').value,
+                        user_email: document.getElementById('user-email').value,
+                        user_phone: document.getElementById('user-phone').value
+                    };
+
+                    try {
+                        // Envia para a API segura
+                        const res = await fetch('/api/auth/request-school', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData)
+                        });
+
+                        const data = await res.json();
+
+                        if (res.ok) {
                             document.getElementById('main-form-wrapper').style.display = 'none';
                             document.getElementById('success-message-wrapper').style.display = 'block';
-                            // Função global de notificação (do script.js)
-                            if(window.showNotification) window.showNotification('Sucesso! Recebemos seu chamado.', 'success');
-                        }, (error) => {
-                            btn.textContent = originalText;
-                            btn.disabled = false;
-                            if(window.showNotification) window.showNotification('Falha no envio. Tente novamente.', 'error');
-                            console.error('EmailJS Error:', error);
-                        });
+                            if(window.showNotification) window.showNotification('Dados recebidos com sucesso!', 'success');
+                        } else {
+                            throw new Error(data.message || 'Erro no servidor');
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        if(window.showNotification) window.showNotification('Falha na transmissão. Tente novamente.', 'error');
+                    }
                 });
             }
         });
