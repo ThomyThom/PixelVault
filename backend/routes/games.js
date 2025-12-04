@@ -140,7 +140,7 @@ router.post('/seed', checkAdmin, async (req, res) => {
     }
 });
 
-// --- ROTA: SINCRONIZAR COM DISCORD (NOVO) ---
+// --- ROTA: SINCRONIZAR COM DISCORD (BLINDADA) ---
 router.post('/sync-discord', checkAdmin, async (req, res) => {
     const webhookUrl = process.env.DISCORD_CATALOG_WEBHOOK;
 
@@ -149,55 +149,77 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
     }
 
     try {
-        // 1. Busca todos os jogos
-        const games = await Game.find().sort({ title: 1 }); // Ordem alfabética fica melhor no catálogo
+        // Busca todos os jogos
+        const games = await Game.find().sort({ title: 1 });
         let sentCount = 0;
+        let errorCount = 0;
 
-        // 2. Envia um por um (Loop com pausa para não tomar bloqueio do Discord)
         for (const game of games) {
-            
-            // CORREÇÃO DE IMAGEM: Transforma caminho relativo em URL absoluta para o Discord ler
-            let finalImage = game.image;
-            if (finalImage && finalImage.startsWith('/')) {
-                finalImage = `https://pixelvaultshop.vercel.app${finalImage}`;
+            // --- BLINDAGEM INDIVIDUAL ---
+            // Se um jogo falhar, o 'catch' abaixo pega o erro e o loop continua para o próximo.
+            try {
+                
+                // 1. Filtro de Drop Secreto (Opcional - Descomente se quiser pular os bloqueados)
+                // if (game.isComingSoon) continue; 
+
+                // 2. Correção de Imagem (URL Absoluta ou Placeholder)
+                let finalImage = game.image;
+                if (!finalImage) {
+                    finalImage = "https://via.placeholder.com/300x400?text=Sem+Capa"; // Fallback
+                } else if (finalImage.startsWith('/')) {
+                    finalImage = `https://pixelvaultshop.vercel.app${finalImage}`;
+                }
+
+                // 3. Formata o Embed
+                const embed = {
+                    title: game.title,
+                    description: game.isComingSoon 
+                        ? "🔒 **CONFIDENCIAL - EM BREVE**" 
+                        : `🎮 **Disponível no Cofre**\n\nCategorias: _${game.categories.join(', ')}_`,
+                    // Discord não aceita cor 0 preto puro às vezes, usamos um cinza muito escuro (0x2C2F33) ou o ciano padrão
+                    color: game.isComingSoon ? 2895667 : 5763719, 
+                    fields: [
+                        { name: "PC Pessoal", value: "R$ 20,00", inline: true },
+                        { name: "PC Escola", value: "R$ 30,00", inline: true },
+                        { name: "Combo", value: "R$ 50,00", inline: true }
+                    ],
+                    thumbnail: { url: finalImage },
+                    footer: { text: "Pixel Vault • Access Granted" }
+                };
+
+                // 4. Envio Seguro
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: "Pixel Vault Estoque",
+                        avatar_url: "https://cdn-icons-png.flaticon.com/512/6840/6840478.png",
+                        embeds: [embed]
+                    })
+                });
+
+                // Se o Discord rejeitar (Ex: erro 400 por imagem inválida), lançamos erro para o catch individual
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`Discord rejeitou: ${errText}`);
+                }
+
+                sentCount++;
+                // Pausa anti-spam
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+            } catch (innerError) {
+                console.error(`Falha ao enviar o jogo "${game.title}":`, innerError.message);
+                errorCount++;
+                // O loop continua para o próximo jogo...
             }
-
-            // Formata o Card (Embed) do Discord
-            const embed = {
-                title: game.title,
-                description: game.isComingSoon ? "🔒 **DROP SECRETO - EM BREVE**" : `🎮 **Disponível no Cofre**\n\nCategorias: _${game.categories.join(', ')}_`,
-                color: game.isComingSoon ? 0 : 5763719, 
-                fields: [
-                    { name: "PC Pessoal", value: "R$ 20,00", inline: true },
-                    { name: "PC Escola", value: "R$ 30,00", inline: true },
-                    { name: "Combo", value: "R$ 50,00", inline: true }
-                ],
-                thumbnail: { url: finalImage }, 
-                image: { url: finalImage }, 
-                footer: { text: "Pixel Vault • Access Granted" }
-            };
-
-            // Payload para o Webhook
-            await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: "Pixel Vault Estoque",
-                    avatar_url: "https://cdn-icons-png.flaticon.com/512/6840/6840478.png", // Ícone de cofre ou seu logo
-                    embeds: [embed]
-                })
-            });
-
-            sentCount++;
-            // Pausa de 1 segundo entre envios para o Discord não bloquear (Rate Limit)
-            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
-        res.json({ message: `Sucesso! ${sentCount} jogos enviados para o Discord.` });
+        res.json({ message: `Sincronização concluída! Enviados: ${sentCount}. Falhas: ${errorCount}. Verifique os logs para detalhes.` });
 
     } catch (error) {
-        console.error("Erro na sincronização:", error);
-        res.status(500).json({ message: 'Falha ao conectar com o Discord.' });
+        console.error("Erro fatal na rota de sincronização:", error);
+        res.status(500).json({ message: 'Erro interno no servidor ao iniciar sincronização.' });
     }
 });
 
