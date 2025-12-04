@@ -156,21 +156,24 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
         // 2. Envia um por um (Loop com pausa para não tomar bloqueio do Discord)
         for (const game of games) {
             
-            // Pula jogos secretos/bloqueados se quiser (ou remove esse if para postar tudo)
-            // if (game.isComingSoon) continue; 
+            // CORREÇÃO DE IMAGEM: Transforma caminho relativo em URL absoluta para o Discord ler
+            let finalImage = game.image;
+            if (finalImage && finalImage.startsWith('/')) {
+                finalImage = `https://pixelvaultshop.vercel.app${finalImage}`;
+            }
 
             // Formata o Card (Embed) do Discord
             const embed = {
                 title: game.title,
                 description: game.isComingSoon ? "🔒 **DROP SECRETO - EM BREVE**" : `🎮 **Disponível no Cofre**\n\nCategorias: _${game.categories.join(', ')}_`,
-                color: game.isComingSoon ? 0 : 5763719, // Preto para secreto, Ciano (Pixel Vault) para normal
+                color: game.isComingSoon ? 0 : 5763719, 
                 fields: [
                     { name: "PC Pessoal", value: "R$ 20,00", inline: true },
                     { name: "PC Escola", value: "R$ 30,00", inline: true },
                     { name: "Combo", value: "R$ 50,00", inline: true }
                 ],
-                thumbnail: { url: game.image }, // Imagem pequena ao lado
-                image: { url: game.image }, // Imagem grande (Opcional, pode remover se ficar muito grande)
+                thumbnail: { url: finalImage }, 
+                image: { url: finalImage }, 
                 footer: { text: "Pixel Vault • Access Granted" }
             };
 
