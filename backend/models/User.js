@@ -1,5 +1,4 @@
-// models/User.js
-
+// backend/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -13,8 +12,11 @@ const UserSchema = new mongoose.Schema({
     course: { type: String, required: true },
     phone: { type: String, required: true, unique: true },
     cpf: { type: String, required: true, unique: true },
-    isVerified: { type: Boolean, default: true }, // MUDOU: Agora é 'true' por padrão
-    // Campos de verificação REMOVIDOS
+    isVerified: { type: Boolean, default: true },
+    
+    // NOVOS CAMPOS PARA RECUPERAÇÃO DE SENHA
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date }
 }, { timestamps: true });
 
 UserSchema.pre('save', async function(next) {
