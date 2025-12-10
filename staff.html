@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAFF ONLY - Pixel Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilo Específico "Terminal / Hacker" para a Staff */
+        .staff-body {
+            font-family: 'Courier Prime', monospace;
+            background-color: #000;
+            color: #0f0;
+        }
+        .staff-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* LOGIN OVERLAY */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .hacker-input {
+            background: transparent; border: none; border-bottom: 2px solid #0f0;
+            color: #0f0; font-family: 'Courier Prime', monospace; font-size: 1.5rem;
+            text-align: center; width: 300px; outline: none; margin-bottom: 20px;
+        }
+        .hacker-btn {
+            background: #0f0; color: #000; border: none; padding: 10px 30px;
+            font-weight: bold; cursor: pointer; font-family: 'Courier Prime', monospace;
+            transition: 0.3s;
+        }
+        .hacker-btn:hover { background: #fff; box-shadow: 0 0 15px #0f0; }
+
+        /* DASHBOARD GRID */
+        .arsenal-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px; display: none; /* Escondido até logar */
+        }
+        .arsenal-col {
+            border: 1px solid #0f0; padding: 20px; background: rgba(0, 255, 0, 0.05);
+        }
+        .arsenal-col h2 {
+            border-bottom: 1px solid #0f0; padding-bottom: 10px; margin-bottom: 20px;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        
+        .tool-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border: 1px dashed rgba(0, 255, 0, 0.3); margin-bottom: 10px;
+            transition: 0.2s;
+        }
+        .tool-item:hover { background: rgba(0, 255, 0, 0.1); border-color: #0f0; }
+        .download-link {
+            color: #0f0; text-decoration: none; border: 1px solid #0f0;
+            padding: 2px 8px; font-size: 0.8rem;
+        }
+        .download-link:hover { background: #0f0; color: #000; }
+
+        .game-sync-tag { font-size: 0.7rem; color: #aaa; }
+    </style>
+</head>
+<body class="staff-body">
+
+    <div id="login-overlay">
+        <h1 style="margin-bottom: 40px;">/// ACESSO RESTRITO ///</h1>
+        <p id="error-msg" style="color: red; display: none;">> ACESSO NEGADO</p>
+        
+        <input type="text" id="sys_core_auth" class="hacker-input" 
+               placeholder="INSIRA A CHAVE MESTRA" 
+               autocomplete="off" 
+               onfocus="this.type='password'">
+        
+        <button class="hacker-btn" id="btn-unlock">DECODIFICAR</button>
+    </div>
+
+    <div class="staff-container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #0f0; padding-bottom: 20px;">
+            <h1>PIXEL VAULT // ARSENAL</h1>
+            <button onclick="logout()" class="hacker-btn" style="background: red; color: white;">ENCERRAR SESSÃO</button>
+        </header>
+
+        <div class="arsenal-grid" id="main-dashboard">
+            
+            <div class="arsenal-col">
+                <h2>01. Steam Tools</h2>
+                <div id="tools-list">
+                    <p>Carregando ferramentas...</p>
+                </div>
+            </div>
+
+            <div class="arsenal-col">
+                <h2>02. Game Scripts</h2>
+                <p class="game-sync-tag">Sincronizado com Banco de Dados</p>
+                <div id="games-list" style="margin-top: 15px;">
+                    <p>Buscando jogos liberados...</p>
+                </div>
+            </div>
+
+            <div class="arsenal-col" style="border-color: red;">
+                <h2 style="color: red; border-color: red;">03. Último Recurso</h2>
+                <p>Ferramentas de limpeza extrema. Use com cautela.</p>
+                
+                <div class="tool-item" style="border-color: red;">
+                    <span style="color: red;">LimpezaCompleta.reg</span>
+                    <a href="#" id="btn-last-resort" class="download-link" style="color: red; border-color: red;">BAIXAR</a>
+                </div>
+                <p style="font-size: 0.8rem; margin-top: 10px; color: #888;">
+                    Adiciona opção no menu de contexto para deletar pastas forçadamente e recriá-las vazias.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/staff';
+        let SESSION_KEY = '';
+
+        // 1. SISTEMA DE LOGIN (Não salva senha)
+        document.getElementById('btn-unlock').addEventListener('click', attemptLogin);
+        document.getElementById('sys_core_auth').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') attemptLogin();
+        });
+
+        async function attemptLogin() {
+            const input = document.getElementById('sys_core_auth');
+            const key = input.value;
+            const btn = document.getElementById('btn-unlock');
+
+            btn.textContent = 'VERIFICANDO...';
+            
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'x-staff-secret': key }
+                });
+
+                if (res.ok) {
+                    SESSION_KEY = key; // Salva na memória RAM (perde ao fechar aba)
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('main-dashboard').style.display = 'grid';
+                    loadData();
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                document.getElementById('error-msg').style.display = 'block';
+                input.value = '';
+                btn.textContent = 'DECODIFICAR';
+            }
+        }
+
+        // 2. CARREGAR DADOS
+        async function loadData() {
+            try {
+                const res = await fetch(`${API_URL}/data`, {
+                    headers: { 'x-staff-secret': SESSION_KEY }
+                });
+                const data = await res.json();
+
+                // Renderiza Ferramentas (Fixas + Backend)
+                const toolsContainer = document.getElementById('tools-list');
+                toolsContainer.innerHTML = '';
+                data.steamTools.forEach(tool => {
+                    toolsContainer.innerHTML += `
+                        <div class="tool-item">
+                            <span>${tool.name}</span>
+                            <a href="${tool.url}" target="_blank" class="download-link">BAIXAR</a>
+                        </div>`;
+                });
+
+                // Renderiza Jogos (MongoDB)
+                const gamesContainer = document.getElementById('games-list');
+                gamesContainer.innerHTML = '';
+                data.games.forEach(game => {
+                    // Aqui assumimos que o script tem o nome do jogo ou um link padrão
+                    // Você pode adicionar um campo 'scriptLink' no MongoDB depois se quiser
+                    const scriptName = game.title.replace(/[^a-zA-Z0-9]/g, '_') + "_script.bat";
+                    
+                    gamesContainer.innerHTML += `
+                        <div class="tool-item">
+                            <span style="font-size: 0.9rem;">${game.title}</span>
+                            <a href="#" onclick="alert('Download do script de ${game.title} iniciado')" class="download-link">GET</a>
+                        </div>`;
+                });
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // 3. DOWNLOAD DO ULTIMO RECURSO (.REG)
+        document.getElementById('btn-last-resort').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                const res = await fetch(`${API_URL}/download/last-resort`, {
+                    headers: { 'x-staff-secret': SESSION_KEY }
+                });
+                
+                if(!res.ok) return alert('Erro ao baixar arquivo.');
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "2_Ultimo_Recurso.reg";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (e) {
+                alert('Erro na conexão segura.');
+            }
+        });
+
+        function logout() {
+            SESSION_KEY = '';
+            location.reload();
+        }
+    </script>
+</body>
+</html>
