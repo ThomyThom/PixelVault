@@ -222,6 +222,64 @@
             SESSION_KEY = '';
             location.reload();
         }
+
+        // FUNÇÃO DE DOWNLOAD VIA TÚNEL (Formato ZIP)
+        async function downloadSecurely(gameId, gameTitle) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            // Feedback Visual
+            btn.textContent = 'BAIXANDO...';
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+
+            try {
+                // 1. Chama o Túnel
+                const res = await fetch(`${API_URL}/tunnel/${gameId}`, {
+                    headers: { 'x-staff-secret': SESSION_KEY }
+                });
+
+                if (!res.ok) throw new Error('Falha no servidor');
+
+                // 2. Cria o Arquivo na Memória (Blob ZIP)
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                // 3. Formata o Nome (Igual ao Backend: Espaço -> Traço)
+                const safeName = gameTitle.trim().replace(/\s+/g, '-') + '.zip';
+
+                // 4. Dispara o Download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = safeName; // Ex: Cyberpunk-2077.zip
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                
+                window.URL.revokeObjectURL(url); // Limpa memória RAM
+
+                // Feedback Sucesso
+                btn.textContent = 'SUCESSO';
+                btn.style.color = '#0f0';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.color = ''; // Reseta cor
+                    btn.style.opacity = '1';
+                }, 2000);
+
+            } catch (e) {
+                alert('Erro: Link quebrado ou arquivo não é direto.');
+                btn.textContent = 'ERRO';
+                btn.style.color = 'red';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.color = '';
+                    btn.style.opacity = '1';
+                }, 2000);
+            } finally {
+                btn.style.pointerEvents = 'auto';
+            }
+        }
     </script>
 </body>
 </html>
