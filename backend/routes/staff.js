@@ -82,14 +82,20 @@ router.get('/tunnel/:id', verifyStaff, async (req, res) => {
         const response = await fetch(secretUrl);
         if (!response.ok) throw new Error(`Falha na extração: ${response.statusText}`);
 
-        // 3. FORMATAÇÃO DO NOME (Regra: Espaços viram traços, final .zip)
-        // Exemplo: "God of War" -> "God-of-War.zip"
-        const safeTitle = game.title
-            .trim()                   // Remove espaços nas pontas
-            .replace(/\s+/g, '-')     // Substitui TODOS os espaços por traços
-            .replace(/[^\w\-]/g, ''); // Remove caracteres especiais estranhos (opcional, pra não quebrar windows)
+        // 3. FORMATAÇÃO DO NOME (Limpeza Profunda)
+        // Regra: Remove : / \ ? * " < > | (ilegais no Windows)
+        // Depois troca espaços por traços
         
-        const filename = `${safeTitle}.zip`;
+        // 3. Formata o Nome (Igual ao Backend)
+        // Ex: "Spider-Man: Miles Morales" -> "Spider-Man-Miles-Morales.zip"
+        const safeName = gameTitle
+            .replace(/:/g, '')           // Remove dois pontos
+            .replace(/[<>"/\\|?*]/g, '') // Remove ilegais
+            .trim()
+            .replace(/\s+/g, '-')        // Espaço vira traço
+            + '.zip';
+        
+        const filename = `${safeName}`;
 
         // 4. Cabeçalhos de Resposta (Força download ZIP)
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
