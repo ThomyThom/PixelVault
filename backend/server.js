@@ -95,10 +95,12 @@ app.use(async (req, res, next) => {
 // --- 3. ROTAS ---
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games'); // <--- NOVA ROTA
+const staffRoutes = require('./routes/staff');
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes); // <--- REGISTRO DA ROTA
-
+app.use('/api/staff', staffRoutes);
 app.get('/', (req, res) => {
     res.send('API Pixel Vault Online 🚀');
 });

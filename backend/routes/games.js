@@ -140,7 +140,7 @@ router.post('/seed', checkAdmin, async (req, res) => {
     }
 });
 
-// --- ROTA: SINCRONIZAR COM DISCORD (AGORA COM DATAS MÁGICAS) ---
+// --- ROTA: SINCRONIZAR COM DISCORD (CORREÇÃO BASE64) ---
 router.post('/sync-discord', checkAdmin, async (req, res) => {
     const webhookUrl = process.env.DISCORD_CATALOG_WEBHOOK;
 
@@ -152,47 +152,31 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
         const games = await Game.find().sort({ title: 1 });
         
         const allEmbeds = games.map(game => {
-            // 1. Verifica Bloqueio
-            const now = new Date();
-            let isLocked = game.isComingSoon; // Pega o manual
-            
-            // Se tiver data futura, força o bloqueio
-            if (game.unlocksAt && now < new Date(game.unlocksAt)) {
-                isLocked = true;
-            }
-
-            // 2. Limpeza de Imagem
             let finalImage = game.image;
+            
+            // LÓGICA DE LIMPEZA DE IMAGEM
             if (!finalImage) {
                 finalImage = "https://via.placeholder.com/300x400?text=Sem+Capa";
-            } else if (finalImage.startsWith('data:')) {
-                // Proteção contra Base64 que quebra o Discord
+            } 
+            // SE FOR BASE64 (O ERRO ATUAL), USA PLACEHOLDER
+            // O Discord não aceita Base64, então não adianta tentar enviar.
+            else if (finalImage.startsWith('data:')) {
+                console.warn(`[AVISO] Jogo "${game.title}" tem imagem em Base64. Usando placeholder.`);
                 finalImage = "https://via.placeholder.com/300x400?text=Imagem+Invalida";
-            } else if (!finalImage.startsWith('http')) {
+            }
+            // SE NÃO FOR HTTP (Caminho relativo), ADICIONA DOMÍNIO
+            else if (!finalImage.startsWith('http')) {
                 let cleanPath = finalImage.replace(/\\/g, '/');
                 if (cleanPath.startsWith('/')) cleanPath = cleanPath.slice(1);
                 finalImage = `https://pixelvaultshop.vercel.app/${encodeURI(cleanPath)}`;
             }
 
-            // 3. Constrói a Descrição Inteligente
-            let descriptionText = `🎮 **Disponível no Cofre**\nCategorias: _${(game.categories || []).join(', ')}_`;
-            
-            if (isLocked) {
-                let dateInfo = "Em breve";
-                // Se tiver data, cria o carimbo mágico do Discord
-                if (game.unlocksAt) {
-                    const unixTime = Math.floor(new Date(game.unlocksAt).getTime() / 1000);
-                    // <t:X:f> mostra data completa, <t:X:R> mostra "em 2 dias"
-                    dateInfo = `<t:${unixTime}:f>\n(Libera <t:${unixTime}:R>)`;
-                }
-
-                descriptionText = `🔒 **CONTEÚDO BLOQUEADO**\n\nEste drop será descriptografado em:\n📅 ${dateInfo}`;
-            }
-
             return {
                 title: game.title || "Título Desconhecido",
-                description: descriptionText,
-                color: isLocked ? 2829617 : 5763719, // Preto para bloqueado, Ciano para livre
+                description: game.isComingSoon 
+                    ? "🔒 **CONFIDENCIAL - EM BREVE**" 
+                    : `🎮 **Disponível no Cofre**\nCategorias: _${(game.categories || []).join(', ')}_`,
+                color: game.isComingSoon ? 2829617 : 5763719,
                 fields: [
                     { name: "PC Pessoal", value: "R$ 20,00", inline: true },
                     { name: "PC Escola", value: "R$ 30,00", inline: true },
@@ -203,7 +187,7 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
             };
         });
 
-        // Envia em lotes de 4
+        // ENVIO EM LOTES DE 4
         const chunkSize = 4;
         let sentCount = 0;
         let errorLog = [];
@@ -225,7 +209,7 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
                 if (!response.ok) {
                     const errText = await response.text();
                     console.error(`[ERRO DISCORD] Lote ${i}:`, errText);
-                    errorLog.push(`Lote ${i/chunkSize + 1} falhou.`);
+                    errorLog.push(`Lote ${i/chunkSize + 1} falhou: ${errText}`);
                 } else {
                     sentCount += chunk.length;
                 }
@@ -240,10 +224,10 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
 
         if (errorLog.length > 0) {
             res.status(207).json({ 
-                message: `Sincronização parcial. Enviados: ${sentCount}. Erros detectados.` 
+                message: `Sincronização parcial. Enviados: ${sentCount}. Jogos com imagem inválida foram substituídos por placeholder.` 
             });
         } else {
-            res.json({ message: `Sucesso! ${sentCount} jogos sincronizados com datas.` });
+            res.json({ message: `Sucesso total! ${sentCount} jogos sincronizados.` });
         }
 
     } catch (error) {
@@ -253,7 +237,5 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
 });
 
 module.exports = router;
-
-
 
 
