@@ -67,4 +67,44 @@ router.get('/download/last-resort', verifyStaff, (req, res) => {
     res.send(regContent);
 });
 
+// --- ROTA: TÚNEL DE DADOS (PROXY ZIP) ---
+router.get('/tunnel/:id', verifyStaff, async (req, res) => {
+    try {
+        // 1. Busca dados
+        const game = await Game.findById(req.params.id);
+        if (!game || !game.scriptLink) {
+            return res.status(404).send('Alvo não localizado ou sem script.');
+        }
+
+        const secretUrl = game.scriptLink;
+
+        // 2. Baixa o arquivo secretamente
+        const response = await fetch(secretUrl);
+        if (!response.ok) throw new Error(`Falha na extração: ${response.statusText}`);
+
+        // 3. FORMATAÇÃO DO NOME (Regra: Espaços viram traços, final .zip)
+        // Exemplo: "God of War" -> "God-of-War.zip"
+        const safeTitle = game.title
+            .trim()                   // Remove espaços nas pontas
+            .replace(/\s+/g, '-')     // Substitui TODOS os espaços por traços
+            .replace(/[^\w\-]/g, ''); // Remove caracteres especiais estranhos (opcional, pra não quebrar windows)
+        
+        const filename = `${safeTitle}.zip`;
+
+        // 4. Cabeçalhos de Resposta (Força download ZIP)
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', 'application/zip');
+
+        // 5. Transmite (Stream)
+        const { Readable } = require('stream');
+        // @ts-ignore
+        const nodeStream = Readable.fromWeb(response.body);
+        nodeStream.pipe(res);
+
+    } catch (error) {
+        console.error("Erro no túnel:", error);
+        res.status(500).send('Erro na conexão segura. Verifique se o link é direto.');
+    }
+});
+
 module.exports = router;
