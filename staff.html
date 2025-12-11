@@ -56,13 +56,22 @@
             transition: 0.2s;
         }
         .tool-item:hover { background: rgba(0, 255, 0, 0.1); border-color: #0f0; }
+        
         .download-link {
             color: #0f0; text-decoration: none; border: 1px solid #0f0;
-            padding: 2px 8px; font-size: 0.8rem;
+            padding: 2px 8px; font-size: 0.8rem; cursor: pointer;
         }
         .download-link:hover { background: #0f0; color: #000; }
 
         .game-sync-tag { font-size: 0.7rem; color: #aaa; }
+
+        /* AVISO DE PROTOCOLO */
+        .protocol-warning {
+            border: 1px solid #FFA500; color: #FFA500; padding: 15px;
+            font-size: 0.85rem; line-height: 1.4;
+            background: rgba(255, 165, 0, 0.1);
+        }
+        .protocol-step { margin-top: 10px; display: block; }
     </style>
 </head>
 <body class="staff-body">
@@ -88,9 +97,19 @@
         <div class="arsenal-grid" id="main-dashboard">
             
             <div class="arsenal-col">
-                <h2>01. Steam Tools</h2>
-                <div id="tools-list">
-                    <p>Carregando ferramentas...</p>
+                <h2>01. Injeção Manual</h2>
+                
+                <div class="protocol-warning">
+                    <strong>⚠️ PROTOCOLO DE SEGURANÇA ATIVO</strong><br><br>
+                    Devido a restrições de segurança dos navegadores (Falso Positivo), o download direto das ferramentas de injeção foi suspenso nesta rede.
+                </div>
+
+                <div style="margin-top: 20px; font-size: 0.9rem;">
+                    <p><strong>PROCEDIMENTO PADRÃO:</strong></p>
+                    <span class="protocol-step">1. Utilize sua cópia local da pasta <strong>[Pixel_Tools]</strong>.</span>
+                    <span class="protocol-step">2. Conecte ao cliente via <strong>AnyDesk</strong>.</span>
+                    <span class="protocol-step">3. Use a função "Transferência de Arquivo" do AnyDesk para enviar a pasta ao cliente.</span>
+                    <span class="protocol-step">4. Execute, injete e delete após o uso.</span>
                 </div>
             </div>
 
@@ -122,7 +141,7 @@
         const API_URL = '/api/staff';
         let SESSION_KEY = '';
 
-        // 1. SISTEMA DE LOGIN (Não salva senha)
+        // 1. SISTEMA DE LOGIN
         document.getElementById('btn-unlock').addEventListener('click', attemptLogin);
         document.getElementById('sys_core_auth').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') attemptLogin();
@@ -142,7 +161,7 @@
                 });
 
                 if (res.ok) {
-                    SESSION_KEY = key; // Salva na memória RAM (perde ao fechar aba)
+                    SESSION_KEY = key;
                     document.getElementById('login-overlay').style.display = 'none';
                     document.getElementById('main-dashboard').style.display = 'grid';
                     loadData();
@@ -156,7 +175,7 @@
             }
         }
 
-        // 2. CARREGAR DADOS
+        // 2. CARREGAR DADOS (Apenas Jogos agora)
         async function loadData() {
             try {
                 const res = await fetch(`${API_URL}/data`, {
@@ -164,29 +183,19 @@
                 });
                 const data = await res.json();
 
-                // Renderiza Ferramentas (Fixas + Backend)
-                const toolsContainer = document.getElementById('tools-list');
-                toolsContainer.innerHTML = '';
-                data.steamTools.forEach(tool => {
-                    toolsContainer.innerHTML += `
-                        <div class="tool-item">
-                            <span>${tool.name}</span>
-                            <a href="${tool.url}" target="_blank" class="download-link">BAIXAR</a>
-                        </div>`;
-                });
-
                 // Renderiza Jogos (MongoDB)
                 const gamesContainer = document.getElementById('games-list');
                 gamesContainer.innerHTML = '';
+                
                 data.games.forEach(game => {
-                    // Aqui assumimos que o script tem o nome do jogo ou um link padrão
-                    // Você pode adicionar um campo 'scriptLink' no MongoDB depois se quiser
-                    const scriptName = game.title.replace(/[^a-zA-Z0-9]/g, '_') + "_script.bat";
-                    
+                    const action = game.scriptLink 
+                        ? `onclick="downloadSecurely('${game._id}', '${game.title}')"` 
+                        : `onclick="alert('Script não cadastrado.')" style="opacity: 0.5; cursor: not-allowed;"`;
+
                     gamesContainer.innerHTML += `
                         <div class="tool-item">
                             <span style="font-size: 0.9rem;">${game.title}</span>
-                            <a href="#" onclick="alert('Download do script de ${game.title} iniciado')" class="download-link">GET</a>
+                            <a href="#" ${action} class="download-link">GET</a>
                         </div>`;
                 });
 
@@ -195,14 +204,70 @@
             }
         }
 
-        // 3. DOWNLOAD DO ULTIMO RECURSO (.REG)
+        // 3. DOWNLOAD SEGURO VIA TÚNEL (.ZIP)
+        async function downloadSecurely(gameId, gameTitle) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            btn.textContent = 'BAIXANDO...';
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+
+            try {
+                const res = await fetch(`${API_URL}/tunnel/${gameId}`, {
+                    headers: { 'x-staff-secret': SESSION_KEY }
+                });
+
+                if (!res.ok) throw new Error('Falha no servidor');
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                // Sanitização do nome (Remove : / \ ? * " < > |)
+                const safeName = gameTitle
+                    .replace(/:/g, '')
+                    .replace(/[<>"/\\|?*]/g, '')
+                    .trim()
+                    .replace(/\s+/g, '-') 
+                    + '.zip';
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = safeName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                btn.textContent = 'SUCESSO';
+                btn.style.color = '#0f0';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.color = '';
+                    btn.style.opacity = '1';
+                }, 2000);
+
+            } catch (e) {
+                alert('Erro: Link quebrado ou arquivo não é direto.');
+                btn.textContent = 'ERRO';
+                btn.style.color = 'red';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.color = '';
+                    btn.style.opacity = '1';
+                }, 2000);
+            } finally {
+                btn.style.pointerEvents = 'auto';
+            }
+        }
+
+        // 4. DOWNLOAD ÚLTIMO RECURSO (.REG)
         document.getElementById('btn-last-resort').addEventListener('click', async (e) => {
             e.preventDefault();
             try {
                 const res = await fetch(`${API_URL}/download/last-resort`, {
                     headers: { 'x-staff-secret': SESSION_KEY }
                 });
-                
                 if(!res.ok) return alert('Erro ao baixar arquivo.');
 
                 const blob = await res.blob();
@@ -221,64 +286,6 @@
         function logout() {
             SESSION_KEY = '';
             location.reload();
-        }
-
-        // FUNÇÃO DE DOWNLOAD VIA TÚNEL (Formato ZIP)
-        async function downloadSecurely(gameId, gameTitle) {
-            const btn = event.target;
-            const originalText = btn.textContent;
-            
-            // Feedback Visual
-            btn.textContent = 'BAIXANDO...';
-            btn.style.opacity = '0.5';
-            btn.style.pointerEvents = 'none';
-
-            try {
-                // 1. Chama o Túnel
-                const res = await fetch(`${API_URL}/tunnel/${gameId}`, {
-                    headers: { 'x-staff-secret': SESSION_KEY }
-                });
-
-                if (!res.ok) throw new Error('Falha no servidor');
-
-                // 2. Cria o Arquivo na Memória (Blob ZIP)
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                
-                // 3. Formata o Nome (Igual ao Backend: Espaço -> Traço)
-                const safeName = gameTitle.trim().replace(/\s+/g, '-') + '.zip';
-
-                // 4. Dispara o Download
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = safeName; // Ex: Cyberpunk-2077.zip
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                
-                window.URL.revokeObjectURL(url); // Limpa memória RAM
-
-                // Feedback Sucesso
-                btn.textContent = 'SUCESSO';
-                btn.style.color = '#0f0';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.color = ''; // Reseta cor
-                    btn.style.opacity = '1';
-                }, 2000);
-
-            } catch (e) {
-                alert('Erro: Link quebrado ou arquivo não é direto.');
-                btn.textContent = 'ERRO';
-                btn.style.color = 'red';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.color = '';
-                    btn.style.opacity = '1';
-                }, 2000);
-            } finally {
-                btn.style.pointerEvents = 'auto';
-            }
         }
     </script>
 </body>
