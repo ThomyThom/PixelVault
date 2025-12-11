@@ -213,15 +213,14 @@
 
         async function loadGames() {
             const listContainer = document.getElementById('active-games-list');
-            const secret = document.getElementById('admin-key').value; // Pega a senha do input
+            const secret = document.getElementById('admin-key').value;
 
             try {
-                // AGORA ENVIAMOS A SENHA NO HEADER PARA RECEBER OS LINKS SECRETOS
                 const res = await fetch(API_URL, {
                     method: 'GET',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'x-admin-secret': secret // <--- O PULO DO GATO
+                        'x-admin-secret': secret 
                     }
                 });
 
@@ -229,6 +228,10 @@
 
                 allGamesData = await res.json(); 
                 
+                // --- DEBUG NOVO ---
+                console.log("LISTA RECEBIDA DO SERVIDOR:", allGamesData);
+                // ------------------
+
                 listContainer.innerHTML = '';
                 
                 allGamesData.forEach(game => {
@@ -269,6 +272,11 @@
             const game = allGamesData.find(g => g._id === id);
             if (!game) return;
 
+            // --- DEBUG NOVO ---
+            console.log("JOGO SELECIONADO PARA EDIÇÃO:", game);
+            console.log("LINK DO SCRIPT NESTE JOGO:", game.scriptLink);
+            // ------------------
+
             // 2. Rola a página para o topo (para ver o formulário)
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -288,6 +296,15 @@
                 document.getElementById('game-unlock-date').value = date.toISOString().slice(0, 16);
             } else {
                 document.getElementById('game-unlock-date').value = '';
+            }
+
+            // Verificando se o elemento existe antes de preencher
+            const scriptInput = document.getElementById('game-script-link');
+            if (scriptInput) {
+                scriptInput.value = game.scriptLink || '';
+                console.log("CAMPO PREENCHIDO COM:", scriptInput.value);
+            } else {
+                console.error("ERRO: Input 'game-script-link' não encontrado no HTML!");
             }
 
             // 6. Atualiza o Preview para você ver como ficou
