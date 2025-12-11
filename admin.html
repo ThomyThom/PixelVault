@@ -72,6 +72,11 @@
                         <label>Categorias</label>
                         <input type="text" id="game-categories" placeholder="acao rpg school" required>
                     </div>
+                    <div class="input-group">
+                        <label for="game-script-link" style="color: #0f0;">Link do Arquivo (.zip) - Staff</label>
+                        <input type="text" id="game-script-link" placeholder="Ex: https://cdn.discordapp.com/.../jogo.zip">
+                        <small style="color: #666;">Use um link de download direto (Discord, Dropbox dl=1, etc).</small>
+                    </div>
 
                     <div class="date-wrapper">
                         <label for="game-unlock-date">⏱️ Agendar Liberação (Opcional)</label>
@@ -146,6 +151,7 @@
             const selectedDate = new Date(inputs.unlockDate.value);
             const now = new Date();
             const isFuture = inputs.unlockDate.value && selectedDate > now;
+            
 
             if (isFuture) {
                 preview.card.classList.add('locked');
@@ -176,6 +182,10 @@
                 image: inputs.img.value,
                 price: 20.00,
                 categories: document.getElementById('game-categories').value.split(' ').filter(c => c.trim() !== ''),
+                
+                // --- LINHA NOVA: PEGA O LINK DO INPUT ---
+                scriptLink: document.getElementById('game-script-link').value.trim(), 
+                
                 // Envia a data selecionada ou null
                 unlocksAt: inputs.unlockDate.value ? new Date(inputs.unlockDate.value) : null
             };
@@ -198,17 +208,21 @@
             }
         });
 
+        // Variável global para guardar os jogos (assim o Editar consegue achar os dados)
+        let allGamesData = [];
+
         async function loadGames() {
             const listContainer = document.getElementById('active-games-list');
             try {
                 const res = await fetch(API_URL);
-                const games = await res.json();
+                allGamesData = await res.json(); // Salva na variável global
+                
                 listContainer.innerHTML = '';
-                games.forEach(game => {
+                
+                allGamesData.forEach(game => {
                     const el = document.createElement('div');
                     el.className = 'mini-item';
                     
-                    // Verifica status pelo backend
                     const isLocked = game.isComingSoon;
                     const lockIcon = isLocked ? '🔒 ' : '✅ ';
                     
@@ -220,14 +234,54 @@
                                 <br><span style="font-size:0.8rem; color:#aaa;">${game.categories.join(', ')}</span>
                             </div>
                         </div>
-                        <button class="btn-delete" onclick="deleteGame('${game._id}')">X</button>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-delete" style="background:#4CAF50;" onclick="editGame('${game._id}')">✏️</button>
+                            <button class="btn-delete" onclick="deleteGame('${game._id}')">X</button>
+                        </div>
                     `;
                     listContainer.appendChild(el);
                 });
             } catch (err) {
-                listContainer.innerHTML = '<p style="color:red">Erro.</p>';
+                listContainer.innerHTML = '<p style="color:red">Erro ao carregar.</p>';
             }
         }
+
+        // FUNÇÃO DE EDITAR (Preenche o formulário com os dados existentes)
+        window.editGame = (id) => {
+            // 1. Acha o jogo na memória
+            const game = allGamesData.find(g => g._id === id);
+            if (!game) return;
+
+            // 2. Rola a página para o topo (para ver o formulário)
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 3. Preenche os campos visuais
+            document.getElementById('game-title').value = game.title;
+            document.getElementById('game-image').value = game.image;
+            document.getElementById('game-categories').value = game.categories.join(' ');
+            
+            // 4. PREENCHE O LINK DO SCRIPT (AQUI ESTÁ O QUE FALTAVA)
+            document.getElementById('game-script-link').value = game.scriptLink || '';
+
+            // 5. Preenche a data se houver (precisa formatar para o input datetime-local)
+            if (game.unlocksAt) {
+                // Truque para formatar data para o input HTML (YYYY-MM-DDThh:mm)
+                const date = new Date(game.unlocksAt);
+                date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                document.getElementById('game-unlock-date').value = date.toISOString().slice(0, 16);
+            } else {
+                document.getElementById('game-unlock-date').value = '';
+            }
+
+            // 6. Atualiza o Preview para você ver como ficou
+            updatePreview();
+
+            // Dica: Se quiser atualizar em vez de criar novo, precisaria mudar a lógica do botão Salvar
+            // Mas por enquanto, se você salvar, ele vai criar um NOVO jogo igual.
+            // Para "Editar de verdade" (Update), precisaríamos mudar o backend para aceitar PUT.
+            // O jeito mais rápido agora é: Edita -> Salva Novo -> Deleta o Velho.
+            alert(`Editando: ${game.title}\n\nNota: Ao clicar em "Lançar", você criará um NOVO jogo corrigido.\nLembre-se de deletar o antigo (X) depois.`);
+        };
 
         window.deleteGame = async (id) => {
             if(!confirm('Deletar?')) return;
