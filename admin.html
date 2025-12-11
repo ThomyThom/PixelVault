@@ -208,14 +208,26 @@
             }
         });
 
-        // Variável global para guardar os jogos (assim o Editar consegue achar os dados)
+        // Variável global para guardar os jogos
         let allGamesData = [];
 
         async function loadGames() {
             const listContainer = document.getElementById('active-games-list');
+            const secret = document.getElementById('admin-key').value; // Pega a senha do input
+
             try {
-                const res = await fetch(API_URL);
-                allGamesData = await res.json(); // Salva na variável global
+                // AGORA ENVIAMOS A SENHA NO HEADER PARA RECEBER OS LINKS SECRETOS
+                const res = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-admin-secret': secret // <--- O PULO DO GATO
+                    }
+                });
+
+                if (!res.ok) throw new Error('Falha ao carregar dados restritos');
+
+                allGamesData = await res.json(); 
                 
                 listContainer.innerHTML = '';
                 
@@ -223,14 +235,18 @@
                     const el = document.createElement('div');
                     el.className = 'mini-item';
                     
+                    // Ícone de status
                     const isLocked = game.isComingSoon;
                     const lockIcon = isLocked ? '🔒 ' : '✅ ';
                     
+                    // Indicador se tem script (para você saber visualmente)
+                    const hasScript = game.scriptLink ? '<span style="color:#0f0; font-size:0.7em;">[SCRIPT OK]</span>' : '';
+
                     el.innerHTML = `
                         <div style="display:flex; align-items:center;">
                             <img src="${game.image}">
                             <div class="mini-info">
-                                <strong>${lockIcon}${game.title}</strong>
+                                <strong>${lockIcon}${game.title}</strong> ${hasScript}
                                 <br><span style="font-size:0.8rem; color:#aaa;">${game.categories.join(', ')}</span>
                             </div>
                         </div>
@@ -242,7 +258,8 @@
                     listContainer.appendChild(el);
                 });
             } catch (err) {
-                listContainer.innerHTML = '<p style="color:red">Erro ao carregar.</p>';
+                console.error(err);
+                listContainer.innerHTML = '<p style="color:red">Erro ao carregar lista (Verifique a Chave Mestre).</p>';
             }
         }
 
