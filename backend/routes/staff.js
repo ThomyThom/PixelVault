@@ -24,7 +24,10 @@ router.get('/data', verifyStaff, async (req, res) => {
     try {
         // Busca apenas jogos que NÃO são "Em Breve" (já lançados)
         // Se quiser todos, remova o filtro { isComingSoon: false }
-        const games = await Game.find({ isComingSoon: false }).select('title image').sort({ title: 1 });
+        // Adicione 'scriptLink' na lista de campos selecionados
+        const games = await Game.find({ isComingSoon: false })
+            .select('title image scriptLink') // <--- AQUI
+            .sort({ title: 1 });
         
         res.json({
             games: games,
