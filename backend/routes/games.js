@@ -4,21 +4,12 @@ const router = express.Router();
 const Game = require('../models/Game');
 const checkAdmin = require('../middleware/checkAdmin');
 
-// ROTA PÚBLICA (COM DEBUG DE ADMIN)
+// ROTA PÚBLICA (COM MODO ADMIN OCULTO)
 router.get('/', async (req, res) => {
     try {
-        // --- ÁREA DE DEBUG (Apagar depois de resolver) ---
-        const receivedKey = req.headers['x-admin-secret'];
-        const envKey = process.env.ADMIN_SECRET; // Ou use process.env.STAFF_MASTER_KEY se estiver usando a mesma
-        
-        console.log("--- DIAGNÓSTICO DE LOGIN ---");
-        console.log("1. Chave que chegou do Site:", receivedKey ? "***" + receivedKey.slice(-3) : "Nenhuma");
-        console.log("2. Chave configurada na Vercel:", envKey ? "***" + envKey.slice(-3) : "Não definida/Nome errado");
-        console.log("3. São iguais?", receivedKey === envKey);
-        // -------------------------------------------------
-
-        // Lógica de comparação
-        const isAdmin = receivedKey && envKey && (receivedKey === envKey);
+        // Apenas a lógica silenciosa
+        const adminSecret = process.env.ADMIN_SECRET; 
+        const isAdmin = req.headers['x-admin-secret'] === adminSecret;
 
         const games = await Game.find().sort({ createdAt: -1 });
         
@@ -29,9 +20,8 @@ router.get('/', async (req, res) => {
                 gameObj.isComingSoon = true;
             }
 
-            // O PORTEIRO: Se não for admin, apaga o link
             if (!isAdmin) {
-                delete gameObj.scriptLink;
+                delete gameObj.scriptLink; // Oculta silenciosamente
             }
 
             return gameObj;
@@ -39,8 +29,7 @@ router.get('/', async (req, res) => {
 
         res.json(processedGames);
     } catch (err) {
-        console.error("Erro no GET:", err);
-        res.status(500).json({ message: 'Erro ao buscar jogos: ' + err.message });
+        res.status(500).json({ message: 'Erro ao buscar jogos.' });
     }
 });
 
