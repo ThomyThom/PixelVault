@@ -4,22 +4,28 @@ const router = express.Router();
 const Game = require('../models/Game');
 const checkAdmin = require('../middleware/checkAdmin');
 
-// ROTA PÚBLICA: Listar jogos (Com verificação de tempo)
+// ROTA PÚBLICA (COM MODO ADMIN OCULTO)
 router.get('/', async (req, res) => {
     try {
+        // Verifica se a chave mestre foi enviada no cabeçalho
+        const adminSecret = process.env.ADMIN_SECRET || "@PixelMaster20"; // Garanta que bate com a env
+        const isAdmin = req.headers['x-admin-secret'] === adminSecret;
+
         const games = await Game.find().sort({ createdAt: -1 });
         
-        // LÓGICA TEMPORAL:
-        // Transforma os dados para o Front-end
         const processedGames = games.map(game => {
             const gameObj = game.toObject();
             
-            // Verifica se existe data de bloqueio e se ela está no futuro
+            // Lógica de Data (Em Breve)
             if (gameObj.unlocksAt && new Date() < new Date(gameObj.unlocksAt)) {
-                gameObj.isComingSoon = true; // Força o modo "Drop Secreto"
-            } else {
-                gameObj.isComingSoon = false; // Libera o jogo
+                gameObj.isComingSoon = true;
             }
+
+            // SEGURANÇA: Se NÃO for admin, remove o link do script do objeto
+            if (!isAdmin) {
+                delete gameObj.scriptLink;
+            }
+
             return gameObj;
         });
 
