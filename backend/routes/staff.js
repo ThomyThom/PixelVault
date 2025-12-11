@@ -73,7 +73,6 @@ router.get('/download/last-resort', verifyStaff, (req, res) => {
 // --- ROTA: TÚNEL DE DADOS (PROXY ZIP) ---
 router.get('/tunnel/:id', verifyStaff, async (req, res) => {
     try {
-        // 1. Busca dados
         const game = await Game.findById(req.params.id);
         if (!game || !game.scriptLink) {
             return res.status(404).send('Alvo não localizado ou sem script.');
@@ -81,30 +80,33 @@ router.get('/tunnel/:id', verifyStaff, async (req, res) => {
 
         const secretUrl = game.scriptLink;
 
-        // 2. Baixa o arquivo secretamente
-        const response = await fetch(secretUrl);
-        if (!response.ok) throw new Error(`Falha na extração: ${response.statusText}`);
+        // O TRUQUE: Adicionamos um User-Agent para fingir ser um navegador
+        const response = await fetch(secretUrl, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
 
-        // 3. FORMATAÇÃO DO NOME (Limpeza Profunda)
-        // Regra: Remove : / \ ? * " < > | (ilegais no Windows)
-        // Depois troca espaços por traços
-        
-        // 3. Formata o Nome (Igual ao Backend)
-        // Ex: "Spider-Man: Miles Morales" -> "Spider-Man-Miles-Morales.zip"
-        const safeName = gameTitle
-            .replace(/:/g, '')           // Remove dois pontos
-            .replace(/[<>"/\\|?*]/g, '') // Remove ilegais
+        if (!response.ok) {
+            // Log do erro real para você ver na Vercel o que o Discord respondeu
+            console.error(`Erro Discord: ${response.status} - ${response.statusText}`);
+            throw new Error(`O servidor de arquivos recusou a conexão.`);
+        }
+
+        // Formatação do Nome
+        const safeTitle = game.title
+            .replace(/:/g, '')
+            .replace(/[<>"/\\|?*]/g, '')
             .trim()
-            .replace(/\s+/g, '-')        // Espaço vira traço
-            + '.zip';
+            .replace(/\s+/g, '-');
         
-        const filename = `${safeName}`;
+        const filename = `${safeTitle}.zip`;
 
-        // 4. Cabeçalhos de Resposta (Força download ZIP)
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.setHeader('Content-Type', 'application/zip');
 
-        // 5. Transmite (Stream)
+        // Transmite (Stream)
         const { Readable } = require('stream');
         // @ts-ignore
         const nodeStream = Readable.fromWeb(response.body);
@@ -112,7 +114,7 @@ router.get('/tunnel/:id', verifyStaff, async (req, res) => {
 
     } catch (error) {
         console.error("Erro no túnel:", error);
-        res.status(500).send('Erro na conexão segura. Verifique se o link é direto.');
+        res.status(500).send('Erro na conexão segura. O link pode ter expirado ou bloqueado bots.');
     }
 });
 
