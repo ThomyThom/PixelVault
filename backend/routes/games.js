@@ -4,24 +4,32 @@ const router = express.Router();
 const Game = require('../models/Game');
 const checkAdmin = require('../middleware/checkAdmin');
 
-// ROTA PÚBLICA (COM MODO ADMIN OCULTO)
+// ROTA PÚBLICA (COM DEBUG DE ADMIN)
 router.get('/', async (req, res) => {
     try {
-        // Verifica se a chave mestre foi enviada no cabeçalho
-        const adminSecret = process.env.ADMIN_SECRET || "@PixelMaster20"; // Garanta que bate com a env
-        const isAdmin = req.headers['x-admin-secret'] === adminSecret;
+        // --- ÁREA DE DEBUG (Apagar depois de resolver) ---
+        const receivedKey = req.headers['x-admin-secret'];
+        const envKey = process.env.ADMIN_SECRET; // Ou use process.env.STAFF_MASTER_KEY se estiver usando a mesma
+        
+        console.log("--- DIAGNÓSTICO DE LOGIN ---");
+        console.log("1. Chave que chegou do Site:", receivedKey ? "***" + receivedKey.slice(-3) : "Nenhuma");
+        console.log("2. Chave configurada na Vercel:", envKey ? "***" + envKey.slice(-3) : "Não definida/Nome errado");
+        console.log("3. São iguais?", receivedKey === envKey);
+        // -------------------------------------------------
+
+        // Lógica de comparação
+        const isAdmin = receivedKey && envKey && (receivedKey === envKey);
 
         const games = await Game.find().sort({ createdAt: -1 });
         
         const processedGames = games.map(game => {
             const gameObj = game.toObject();
             
-            // Lógica de Data (Em Breve)
             if (gameObj.unlocksAt && new Date() < new Date(gameObj.unlocksAt)) {
                 gameObj.isComingSoon = true;
             }
 
-            // SEGURANÇA: Se NÃO for admin, remove o link do script do objeto
+            // O PORTEIRO: Se não for admin, apaga o link
             if (!isAdmin) {
                 delete gameObj.scriptLink;
             }
@@ -31,6 +39,7 @@ router.get('/', async (req, res) => {
 
         res.json(processedGames);
     } catch (err) {
+        console.error("Erro no GET:", err);
         res.status(500).json({ message: 'Erro ao buscar jogos: ' + err.message });
     }
 });
@@ -243,5 +252,6 @@ router.post('/sync-discord', checkAdmin, async (req, res) => {
 });
 
 module.exports = router;
+
 
 
